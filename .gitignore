@@ -1,0 +1,7 @@
+.ccls-cache
+E51-pack
+Core
+*.o
+*.elf
+*.hex
+*.lss
