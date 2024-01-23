@@ -1,0 +1,16 @@
+{
+  "C_Cpp.default.compilerPath": "/opt/homebrew/bin/arm-none-eabi-gcc",
+  "makefile.configurations": [
+    {
+      "name": "all"
+    },
+    {
+      "name": "install",
+      "makeArgs": ["blinky-install"]
+    },
+    {
+      "name": "clean",
+      "makeArgs": ["clean"]
+    }
+  ]
+}
