@@ -1,0 +1,52 @@
+\documentclass{article}
+\usepackage{graphicx} % Required for inserting images
+\usepackage{url}
+\title{4060 - T29: Real Time Networking \\ Student Log}
+
+\author{Andrew Marinic - 7675509}
+\date{January - April 2024}
+
+\begin{document}
+
+\maketitle
+\newpage
+
+\tableofcontents
+
+\newpage
+
+\section{Introduction}
+\paragraph{Intro}
+The following is a log or perhaps a journal of my efforts in COMP 4060 - T29 - Real Time Networking. I will break the document into sections for each Month and subsections for each week. Each day will contain a paragraph explaining what I had accomplished. 
+\section{January}
+\subsection{January 8-12}
+\paragraph{Jan 8}
+I did some preliminary reading of the documents provided on CAN networks. I only spent about an hour reading, little notes. 
+\paragraph{Jan 11}
+Dug into the data sheets. Started examining the UART drivers we need to build. Probably 30 mins or so taken aside. Industrial Project has hit the fan a bit and taken up more time. I set up a calendar for the group as we all have fairly tight schedules right now.
+\subsection{January 15-19}
+\paragraph{Jan 15}
+We had an hour-long group meeting today. We discussed the pace of the project we would like to achieve. Send off an email to confirm some items and inform the Supervisor of our meeting availability. I started to dig into blinky again with the updated code. To my grief, I have switched to VScode and started to try and get the debugging working with the help of the other group members. I spent another hour or so getting the debugging to work in VScode, I stopped once I had the debugger open, openOCD via VScode. I started to get a little frustrated and had to finish my industrial project proposal so I stopped for the evening. I will discuss with the group for advice and continue later this week. 
+\paragraph{Jan 17}
+Today I spent around 4 hours deep-diving CAN and making notes on it. Then I proceeded to try and get debugging working one last time before asking for help. If I cannot accomplish this by, Friday I will reach out. I spent approx 1.5 hours on this, but more time was spent reading about it than coding. 
+\subsubsection{Jan 17 Notes From wiki}
+
+
+\paragraph{Jan 18}
+Spent approximately 1 hour reading into the Curiosity Nano's CAN controller. I think I understand the requirements for setting up and how the INIT and CONFIG registers work together. 
+\paragraph{JAN 22}
+I spent about an hour and a half finishing my CAN notes which are visible in the Notes section. I have done some looking into coding the CAN controller of the curiosity nano. 
+\begin{itemize}
+    \item \url{https://github.com/MikroElektronika/mikrosdk_click_v2/tree/master/clicks/canfd3} Here is the CAN FD 3 example code. I gave it a quick browse for something valuable but was mainly looking for CAN controller init code keeping it in my back pocket  though
+    \item \url{https://microchip-mplab-harmony.github.io/reference_apps/apps/sam_e51_cnano/same51n_mikroe_click/readme.html} I also gave themse projects a quick brows for the same as above, but I don't think any use the CAN controller just UART. 
+    \item \url{https://microchip-mplab-harmony.github.io/reference_apps/apps/sam_e54_xpro/same54_can_usb_bridge/readme.html#hardware-used} I do however think there is something useful here. It uses the same micro controller so it should have INIT, read/write code, ect. This will take some digging though. 
+    Today I put in approximately 3.5 hours into researching and documenting. 
+\end{itemize}
+\section{NOTES}
+\include{CAN}
+
+\end{document}
+
+
+
+\end{document}
