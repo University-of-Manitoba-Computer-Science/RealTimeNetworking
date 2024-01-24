@@ -29,8 +29,6 @@ Dug into the data sheets. Started examining the UART drivers we need to build. P
 We had an hour-long group meeting today. We discussed the pace of the project we would like to achieve. Send off an email to confirm some items and inform the Supervisor of our meeting availability. I started to dig into blinky again with the updated code. To my grief, I have switched to VScode and started to try and get the debugging working with the help of the other group members. I spent another hour or so getting the debugging to work in VScode, I stopped once I had the debugger open, openOCD via VScode. I started to get a little frustrated and had to finish my industrial project proposal so I stopped for the evening. I will discuss with the group for advice and continue later this week. 
 \paragraph{Jan 17}
 Today I spent around 4 hours deep-diving CAN and making notes on it. Then I proceeded to try and get debugging working one last time before asking for help. If I cannot accomplish this by, Friday I will reach out. I spent approx 1.5 hours on this, but more time was spent reading about it than coding. 
-\subsubsection{Jan 17 Notes From wiki}
-
 
 \paragraph{Jan 18}
 Spent approximately 1 hour reading into the Curiosity Nano's CAN controller. I think I understand the requirements for setting up and how the INIT and CONFIG registers work together. 
@@ -42,11 +40,9 @@ I spent about an hour and a half finishing my CAN notes which are visible in the
     \item \url{https://microchip-mplab-harmony.github.io/reference_apps/apps/sam_e54_xpro/same54_can_usb_bridge/readme.html#hardware-used} I do however think there is something useful here. It uses the same micro controller so it should have INIT, read/write code, ect. This will take some digging though. 
     Today I put in approximately 3.5 hours into researching and documenting. 
 \end{itemize}
+\paragraph{JAN 24}
+I tinkered more with debugging for about an hour or two this morning. It seems to be somewhat working but I am still not getting proper debugging and have no output from the debug calls. I will give it one last go. I think we will plan a group in person meeting, maybe input from the other students will help. I maybe just need to keep fresh eyes on it and stop getting frustrated and understand it better, but config files are frustrating to me. In a more productive note, I have started some framework for my drive code. I am going to clean up some of my I2C code for my gyro so I have a device to poll data from and send over the CAN network. This way I can make sure I understand the new systimer and clock speed a little better with something I understand. I suspect I will have to use some prescalers to compensate for the 60 times faster clock. I will do a commit at end of day and upload this as a pdf. 
 \section{NOTES}
 \include{CAN}
-
-\end{document}
-
-
 
 \end{document}

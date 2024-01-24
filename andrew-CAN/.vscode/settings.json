@@ -1,5 +1,5 @@
 {
-  "C_Cpp.default.compilerPath": "/opt/homebrew/bin/arm-none-eabi-gcc",
+  "C_Cpp.default.compilerPath": "/opt/gcc-arm-none-eabi/bin/arm-none-eabi-gdb",
   "makefile.configurations": [
     {
       "name": "all"
@@ -12,5 +12,6 @@
       "name": "clean",
       "makeArgs": ["clean"]
     }
-  ]
+  ],
+  "C_Cpp.errorSquiggles": "enabled"
 }

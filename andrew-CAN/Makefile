@@ -11,7 +11,8 @@ PACK=E51-pack
 CC=arm-none-eabi-gcc
 DEVICE_UPPER=$(shell echo $(DEVICE) | tr  '[:lower:]' '[:upper:]')
 
-INCLUDE_PATHS=-I../$(PACK)/include -I../Core/include -Iinclude
+
+INCLUDE_PATHS=-I../$(PACK)/include -I../Core/include -Iinclude -Idriver
 ASFLAGS=-mthumb -mcpu=$(CPU) -D__$(DEVICE_UPPER)__ -O1 -ffunction-sections -Wall
 CFLAGS=-x c -mthumb -mcpu=$(CPU) -D__$(DEVICE_UPPER)__ -O1 -ffunction-sections -Wall -c -std=gnu99
 LDFLAGS=-Wl,--start-group -lm  -Wl,--end-group -Wl,--gc-sections -mthumb -mcpu=$(CPU) -T../$(PACK)/gcc/gcc/$(DEVICE)_flash.ld 

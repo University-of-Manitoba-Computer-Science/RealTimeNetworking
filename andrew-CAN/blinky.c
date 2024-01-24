@@ -1,5 +1,7 @@
 #include "sam.h"
+
 #include "dcc_stdio.h"
+#include "can.h"
 #include <assert.h>
 
 // setup our heartbeat to be 1ms: we overflow at 1ms intervals with a 120MHz clock
@@ -201,7 +203,8 @@ int main(void)
     if ((msCount % LED_FLASH_MS) == 0)
     {
       PORT_REGS->GROUP[0].PORT_OUTTGL = PORT_PA14;
-      test();
+      
+      //test();
     }
   }
   return 0;

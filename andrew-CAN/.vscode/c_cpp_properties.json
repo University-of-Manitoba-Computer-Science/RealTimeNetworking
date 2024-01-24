@@ -1,17 +1,21 @@
 {
-  "configurations": [
-    {
-      "name": "Starting Point for Configuration",
-      "includePath": [
-        "${default}",
-        "${workspaceFolder}/**",
-        "${workspaceFolder}/../Core/include",
-        "${workspaceFolder}/../E51-pack/include",
-        "${workspaceFolder}/../E51-pack/include/**"
-      ],
-      "configurationProvider": "ms-vscode.makefile-tools",
-      "defines": ["__SAME51J20A__"]
-    }
-  ],
-  "version": 4
+    "configurations": [
+        {
+            "name": "Starting Point for Configuration",
+            "includePath": [
+                "${default}",
+                "${workspaceFolder}/**",
+                "${workspaceFolder}/../Core/include",
+                "${workspaceFolder}/../E51-pack/include",
+                "/home/fart/RTN/RealTimeNetworking/E51-pack/include/**",
+                "/home/fart/RTN/RealTimeNetworking/Core/include/**"
+            ],
+            "configurationProvider": "ms-vscode.makefile-tools",
+            "defines": [
+                "__SAME51J20A__"
+            ],
+            "compilerPath": "/opt/gcc-arm-none-eabi/bin/arm-none-eabi-gdb"
+        }
+    ],
+    "version": 4
 }
