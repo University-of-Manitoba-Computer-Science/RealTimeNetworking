@@ -1,0 +1,23 @@
+{
+  "C_Cpp.default.compilerPath": "/opt/homebrew/bin/arm-none-eabi-gcc",
+  "makefile.configurations": [
+    {
+      "name": "all"
+    },
+    {
+      "name": "install",
+      "makeArgs": ["test-install"]
+    },
+    {
+      "name": "clean",
+      "makeArgs": ["clean"]
+    }
+  ],
+  "files.associations": {
+    "*.pro": "prolog",
+    "*.mdx": "markdown",
+    "sam.h": "c",
+    "assert.h": "c",
+    "dcc_stdio.h": "c"
+  }
+}

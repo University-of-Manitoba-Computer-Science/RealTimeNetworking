@@ -1,0 +1,32 @@
+{
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "openOCD",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/test.elf",
+      "cwd": "${workspaceFolder}",
+      "MIMode": "gdb",
+      "targetArchitecture": "arm",
+      "launchCompleteCommand": "None",
+      "hardwareBreakpoints": { "require": true },
+      "miDebuggerPath": "arm-none-eabi-gdb",
+      "setupCommands": [
+        { "text": "file ${workspaceFolder}/test.elf", "ignoreFailures": false },
+        {
+          "text": "target extended-remote localhost:3333",
+          "ignoreFailures": false
+        },
+        { "text": "monitor reset halt", "ignoreFailures": false }
+      ],
+      "debugServerPath": "openocd",
+      "debugServerArgs": "-f board/microchip_same51_curiosity_nano.cfg",
+      "filterStderr": true,
+      "postDebugTask": "reset board"
+    }
+  ]
+}

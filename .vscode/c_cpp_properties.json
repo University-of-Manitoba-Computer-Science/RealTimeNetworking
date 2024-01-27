@@ -1,0 +1,17 @@
+{
+  "configurations": [
+    {
+      "name": "SAME51J20A",
+      "includePath": [
+        "${default}",
+        "${workspaceFolder}/**",
+        "${workspaceFolder}/../Core/include",
+        "${workspaceFolder}/../E51-pack/include",
+        "${workspaceFolder}/../E51-pack/include/**"
+      ],
+      "configurationProvider": "ms-vscode.makefile-tools",
+      "defines": ["__SAME51J20A__"]
+    }
+  ],
+  "version": 4
+}

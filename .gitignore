@@ -1,0 +1,8 @@
+resources/
+build/
+bin/
+*.elf
+*.hex
+*.lss
+*.o
+.DS_Store

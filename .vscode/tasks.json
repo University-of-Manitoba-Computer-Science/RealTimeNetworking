@@ -1,0 +1,11 @@
+{
+  "tasks": 
+  [
+    {
+      "label": "reset board",
+      "command": "openocd -f board/microchip_same51_curiosity_nano.cfg -c \"init\" -c \"reset\" -c \"shutdown\"",
+      "type": "shell"
+    }
+  ],
+  "version": "2.0.0"
+}
