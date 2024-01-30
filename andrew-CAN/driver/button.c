@@ -1,0 +1,21 @@
+#include "button.h"
+
+//lazy source: from my project code
+void clkButton(){
+
+    MCLK_REGS->MCLK_APBAMASK |= MCLK_APBAMASK_EIC_Msk;
+
+}//clkButton
+
+void initButton(){
+
+    //enable intterrupt
+    NVIC_EnableIRQ(EIC_EXTINT_15_IRQn);
+
+   	EIC_REGS->EIC_CONFIG[1] |= ((uint32_t)(EXTINT15_MASK)<<16) | EIC_CONFIG_SENSE7_RISE;
+	EIC_REGS->EIC_DEBOUNCEN |= EXTINT15_MASK;
+	EIC_REGS->EIC_DPRESCALER |= EIC_DPRESCALER_TICKON_Msk | EIC_DPRESCALER_STATES1_Msk |  EIC_DPRESCALER_PRESCALER1_DIV64;
+	EIC_REGS->EIC_INTENSET |= EXTINT15_MASK;
+	EIC_REGS->EIC_CTRLA |= EIC_CTRLA_CKSEL_CLK_ULP32K | EIC_CTRLA_ENABLE_Msk; 
+
+}//initButton

@@ -5,6 +5,7 @@
 
 void clkCAN();
 void initCAN();
+void initCAN0();
 
 void txData();
 
