@@ -1,10 +1,10 @@
 #include <assert.h>
 #include <sam.h>
 
-#include "src/button.h"
-#include "src/can.h"
-#include "src/dcc_stdio.h"
-#include "src/heart.h"
+#include "button.h"
+#include "can.h"
+#include "dcc_stdio.h"
+#include "heart.h"
 
 // number of millisecond between LED flashes
 #define LED_FLASH_MS 1000UL
