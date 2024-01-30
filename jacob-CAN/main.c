@@ -1,7 +1,7 @@
 #include <assert.h>
+#include <sam.h>
 
-#include "dcc_stdio.h"
-#include "sam.h"
+#include "src/dcc_stdio.h"
 
 // setup our heartbeat to be 1ms: we overflow at 1ms intervals with a 120MHz
 // clock uses the SysTicks unit so that we get reliable debugging (timer stops
@@ -15,42 +15,6 @@
 
 // NOTE: this overflows every ~50 days, so I'm not going to care here...
 volatile uint32_t msCount = 0;
-
-// provides debugger only assertion support
-// we are providing the routine called by the standard assert marcro in assert.h
-// if NDEBUG is defined (for release code) the macro does *not* call this
-// function, it's a no-op NOTE: the standard definition has a no_return
-// attribute which we are *not* doing; we breakpoint but can continue execution
-//       we'll live with this one warning...
-void __assert_func(
-    const char *fileName, int lineNum, const char *caller,
-    const char *expression
-)
-{
-    // don't really need any of this printing as the debugger shows all of this
-    // as part of the SIGTRAP information
-    dbg_write_str("Assertion '");
-    dbg_write_str(expression);
-    dbg_write_str("' failed in ");
-    dbg_write_str(fileName);
-    dbg_write_char(':');
-    dbg_write_str(caller);
-    dbg_write_char('(');
-    // this could be more robust; just printing the hex value is easier but less
-    // useful
-    dbg_write_char(lineNum / 1000 + '0');
-    dbg_write_char((lineNum / 100) % 10 + '0');
-    dbg_write_char((lineNum / 10) % 10 + '0');
-    dbg_write_char(lineNum % 10 + '0');
-    dbg_write_char(')');
-
-    // for debugging purposes *this* is all the code we really need
-    // don't breakpoint if we're not running via a debugger, otherwise we stop
-    // 'forever'
-    if ((CoreDebug->DHCSR & CoreDebug_DHCSR_C_DEBUGEN_Msk) ==
-        CoreDebug_DHCSR_C_DEBUGEN_Msk)
-        __BKPT(0);
-}
 
 void heartInit()
 {
@@ -174,7 +138,8 @@ void SysTick_Handler()
 void EIC_EXTINT_15_Handler()
 {
     // clear the interrupt! and go to the next operating mode
-    EIC_REGS->EIC_INTFLAG |= EXTINT15_MASK;
+    EIC_REGS->EIC_INTFLAG           |= EXTINT15_MASK;
+    PORT_REGS->GROUP[0].PORT_OUTTGL  = PORT_PA14;
 }
 
 uint8_t i = 0;
@@ -184,7 +149,6 @@ void test()
     dbg_write_u8(&i, 1);
     i++;
     dbg_write_str("\n");
-    PORT_REGS->GROUP[0].PORT_OUTTGL = PORT_PA14;
 }
 
 int main(void)
@@ -224,46 +188,12 @@ int main(void)
     // we want interrupts!
     __enable_irq();
 
-    // some example logging calls
-#ifndef NDEBUG
-    dbg_write_str("hello world");
-
-    dbg_write_char('t');
-    dbg_write_char('e');
-    dbg_write_char('s');
-    dbg_write_char('t');
-    dbg_write_char('\n');
-
-    unsigned long test_u32 = 0x01234567;
-    dbg_write_u32(&test_u32, 1);
-
-    static const unsigned short test_u16[] = {0x0123, 0x4567, 0x89AB, 0xCDEF,
-                                              0x0123, 0x4567, 0x89AB, 0xCDEF};
-    dbg_write_u16(test_u16, 8);
-
-    static const unsigned char test_u8[] = {0x00, 0x11, 0x22, 0x33, 0x44, 0x55,
-                                            0x66, 0x77, 0x88, 0x99, 0xAA, 0xBB,
-                                            0xCC, 0XDD, 0xEE, 0xFF};
-    dbg_write_u8(test_u8, 16);
-#endif
-
     // sleep until we have an interrupt
     while (1) {
         __WFI();
-        /* uncomment the line below to trace every time this code is reached
-         * WARNING: making this call induces a SIGNIFICANT delay, use sparingly
-         * and wisely (if at all) calling it every time you wake is **not** wise
-         * to show how often the trace point was hit use the following debugger
-         * command: monitor trace point
-         */
-        // dbg_trace_point(0);
-
-        // demo an assertion firing into the debugger
-        // assert(msCount != 250);
-
         // TODO: make proper task scheduling!
         if ((msCount % LED_FLASH_MS) == 0) {
-            PORT_REGS->GROUP[0].PORT_OUTTGL = PORT_PA14;
+            // PORT_REGS->GROUP[0].PORT_OUTTGL = PORT_PA14;
             test();
         }
     }

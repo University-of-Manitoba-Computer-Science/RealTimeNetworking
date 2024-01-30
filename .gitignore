@@ -5,3 +5,5 @@ Core
 *.elf
 *.hex
 *.lss
+.DS_Store
+build/*
