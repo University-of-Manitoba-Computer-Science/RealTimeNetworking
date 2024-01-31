@@ -1,6 +1,6 @@
 # default target when "make" is run w/o arguments
 
-.PHONY: all clean install test
+.PHONY: all clean install
 
 # device specific naming and (sub)paths
 DEVICE=same51j20a
@@ -26,10 +26,6 @@ SRCS=$(wildcard $(SRCDIR)/*.c)
 OBJS=$(patsubst $(SRCDIR)/%.c,$(BUILDDIR)/%.o,$(SRCS))
 
 all: $(TARGET)
-
-test:
-	echo $(SRCS)
-	echo $(OBJS)
 
 debug: CFLAGS += -g
 debug: clean all
