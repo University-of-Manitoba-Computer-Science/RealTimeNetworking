@@ -13,7 +13,7 @@ CC=arm-none-eabi-gcc
 DEVICE_UPPER=$(shell echo $(DEVICE) | tr  '[:lower:]' '[:upper:]')
 BUILDDIR=build
 SRCDIR=src
-TARGET=build/main.elf
+TARGET=$(BUILDDIR)/main.elf
 
 INCLUDE_PATHS=-I../$(PACK)/include -I../Core/include -Iinclude
 ASFLAGS=-mthumb -mcpu=$(CPU) -D__$(DEVICE_UPPER)__ -O1 -ffunction-sections -Wall
