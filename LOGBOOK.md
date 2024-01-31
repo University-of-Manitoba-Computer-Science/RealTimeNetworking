@@ -25,3 +25,7 @@ Reorged project structure (again...) to use directories and cleaned up code. Sti
 # Wed 31 Jan 2024 13:19:26 CST
 
 Added docker build method to solve dependency issues with python version and ncurses. Also bumped gcc version since ubuntu repo uses old version from 2018 which resulted in a .elf file roughly ~10x in size
+
+# Wed 31 Jan 2024 13:41:16 CST
+
+Added comments for x86_64 arch, added OpenOCD, waiting to test usb passthrough
