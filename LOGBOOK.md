@@ -21,3 +21,7 @@ Moved code to new repo, restructured project and built branch.
 # Fri 26 Jan 2024 22:01:09 CST
 
 Reorged project structure (again...) to use directories and cleaned up code. Still trying to fix verify issue that occurs on the first build
+
+# Wed 31 Jan 2024 13:19:26 CST
+
+Added docker build method to solve dependency issues with python version and ncurses. Also bumped gcc version since ubuntu repo uses old version from 2018 which resulted in a .elf file roughly ~10x in size

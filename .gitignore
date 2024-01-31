@@ -1,6 +1,7 @@
 resources/
 build/
 bin/
+vendor/
 *.elf
 *.hex
 *.lss

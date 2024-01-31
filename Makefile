@@ -5,7 +5,7 @@ CC := arm-none-eabi-gcc
 DEVICE := same51j20a
 CPU := Cortex-M4
 BOARD := microchip_same51_curiosity_nano
-PACK := E51-pack
+PACK := E51-Pack
 DEVICE_UPPER := $(shell echo $(DEVICE) | tr '[:lower:]' '[:upper:]')
 
 # Directories
@@ -18,14 +18,14 @@ SRCS := $(wildcard $(SRC_DIR)/*.c)
 LIBS := $(wildcard $(INC_DIR)/*.c)
 
 # Include directories
-INCLUDE_DIRS := -I../$(PACK)/include -I../Core/include -I$(INC_DIR)
+INCLUDE_DIRS := -Ivendor/$(PACK)/include -Ivendor/Core/Include -I$(INC_DIR)
 
 # Compiler flags
 CFLAGS := -x c -mthumb -mcpu=$(CPU) -D__$(DEVICE_UPPER)__ -O1 -ffunction-sections -Wall -c -std=gnu99
-LDFLAGS := -Wl,--start-group -lm -Wl,--end-group -Wl,--gc-sections -mthumb -mcpu=$(CPU) -T../$(PACK)/gcc/gcc/$(DEVICE)_flash.ld
+LDFLAGS := -Wl,--start-group -lm -Wl,--end-group -Wl,--gc-sections -mthumb -mcpu=$(CPU) -Tvendor/$(PACK)/gcc/gcc/$(DEVICE)_flash.ld
 
 # Object files
-SYS_OBJS := ../$(PACK)/gcc/system_$(DEVICE).o ../$(PACK)/gcc/gcc/startup_$(DEVICE).o
+SYS_OBJS := vendor/$(PACK)/gcc/system_$(DEVICE).o vendor/$(PACK)/gcc/gcc/startup_$(DEVICE).o
 LIB_OBJS := $(patsubst $(INC_DIR)/%.c,$(BUILD_DIR)/lib/%.o,$(LIBS))
 OBJS := $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/build/%.o,$(SRCS))
 
@@ -46,6 +46,9 @@ $(BUILD_DIR)/build/%.o: $(SRC_DIR)/%.c
 $(BUILD_DIR)/lib/%.o: $(INC_DIR)/%.c
 	@mkdir -p $(@D)
 	$(CC) $(CFLAGS) $(INCLUDE_DIRS) $< -o $@
+
+%.o: %.c 
+	$(CC) $(CFLAGS) -Ivendor/$(PACK)/include -Ivendor/Core/Include $*.c -o $*.o
 
 $(BUILD_DIR)/%.elf: $(SYS_OBJS) $(LIB_OBJS) $(OBJS)
 	$(CC) -o $@ $(LDFLAGS) $(SYS_OBJS) $(LIB_OBJS) $(OBJS)

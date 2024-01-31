@@ -1,0 +1,7 @@
+bin
+.vscode
+log.sh
+LOGBOOK.md
+README.md
+.git
+.DS_Store
