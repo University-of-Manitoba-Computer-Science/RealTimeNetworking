@@ -62,4 +62,7 @@ clean:
 # Example install target - modify as needed
 %-install: $(BUILD_DIR)/%.elf
 	openocd -f board/$(BOARD).cfg -c "program $(BUILD_DIR)/$*.elf verify reset exit"
+
+%-docker-install:
+	docker run --rm -it --privileged -v $(shell pwd):/app -w /app $(docker build -q .) /bin/bash make $*-install
 	

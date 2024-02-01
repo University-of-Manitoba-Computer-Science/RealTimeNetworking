@@ -30,10 +30,4 @@ RUN tar -xf /tmp/openocd.tar.gz -C /opt \
 
 ENV PATH="/opt/openocd/bin:${PATH}"
 
-# Set the working directory
-WORKDIR /usr/src/app
 
-# Copy the current directory contents into the container
-COPY . .
-
-RUN ["make", "blinky-install"]
