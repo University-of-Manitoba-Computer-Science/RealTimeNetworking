@@ -29,3 +29,7 @@ Added docker build method to solve dependency issues with python version and ncu
 # Wed 31 Jan 2024 13:41:16 CST
 
 Added comments for x86_64 arch, added OpenOCD, waiting to test usb passthrough
+
+# Fri Feb  2 14:45:58 CST 2024
+
+Happy with my docker build system, reached out to Professor Zapp to get urls for CMSIS pack/core so they can be pulled automatically in dockerfile which is now working, also allowed dockerfile to recieve args to determine system arch instead of relying on commented urls
