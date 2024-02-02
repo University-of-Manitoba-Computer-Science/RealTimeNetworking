@@ -2,12 +2,22 @@
 
 ## Landon Colburn
 
-## To build (in Docker):
-
-Make sure `./vendor/Core` and `./vendor/E51-Pack` are properly placed.
+## To build and install (in Docker):
 
 Run
 
 ```
-docker build . -t rtn:latest
+make docker-install
 ```
+
+.elf is located at `./bin/blinky.elf`, and was installed using OpenOCD in Docker.
+
+## To build and install (on host):
+
+Run
+
+```
+make install
+```
+
+.elf is located at `./bin/blinky.elf`, and was installed using OpenOCD on the host.

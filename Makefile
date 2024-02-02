@@ -73,8 +73,8 @@ clean:
 	rm -rf $(BUILD_DIR)
 
 # Example install target - modify as needed
-%-install: $(BUILD_DIR)/%.elf
-	openocd -f board/$(BOARD).cfg -c "program $(BUILD_DIR)/$*.elf verify reset exit"
+install: $(BUILD_DIR)/$(MAIN).elf
+	openocd -f board/$(BOARD).cfg -c "program $(BUILD_DIR)/$(MAIN).elf verify reset exit"
 
 # Build the docker container based build environment and tag it as supercoolrealtimenetworkingbuilder:latest
 docker-build:
@@ -87,5 +87,5 @@ docker-install: docker-build
 		-v ./:/app \
 		-w /app \
 		supercoolrealtimenetworkingbuilder:latest \
-		make $(MAIN)-install CORE_PATH=/opt/core PACK_PATH=/opt/same51
+		make install CORE_PATH=/opt/core PACK_PATH=/opt/same51
 	
