@@ -32,7 +32,9 @@ We had an hour-long group meeting today. We discussed the pace of the project we
 Today I spent around 4 hours deep-diving CAN and making notes on it. Then I proceeded to try and get debugging working one last time before asking for help. If I cannot accomplish this by, Friday I will reach out. I spent approx 1.5 hours on this, but more time was spent reading about it than coding. 
 
 \paragraph{Jan 18}
+
 Spent approximately 1 hour reading into the Curiosity Nano's CAN controller. I think I understand the requirements for setting up and how the INIT and CONFIG registers work together. 
+\subsection{January 19-23}
 \paragraph{JAN 22}
 I spent about an hour and a half finishing my CAN notes which are visible in the Notes section. I have done some looking into coding the CAN controller of the curiosity nano. 
 \begin{itemize}
@@ -43,12 +45,22 @@ I spent about an hour and a half finishing my CAN notes which are visible in the
 \end{itemize}
 \paragraph{JAN 24}
 I tinkered more with debugging for about an hour or two this morning. It seems to be somewhat working but I am still not getting proper debugging and have no output from the debug calls. I will give it one last go. I think we will plan a group in person meeting, maybe input from the other students will help. I maybe just need to keep fresh eyes on it and stop getting frustrated and understand it better, but config files are frustrating to me. In a more productive note, I have started some framework for my drive code. I am going to clean up some of my I2C code for my gyro so I have a device to poll data from and send over the CAN network. This way I can make sure I understand the new systimer and clock speed a little better with something I understand. I suspect I will have to use some prescalers to compensate for the 60 times faster clock. I will do a commit at end of day and upload this as a pdf. 
-
+\subsection{January 26 - February 1 }
 \paragraph{JAN 29}
 Today I continued my efforts of attempting to get the CAN0 controller initialized. I got some preliminary coding done with it. I sort of got confused with some of the usage documentation and searched for some reference code online. I am having serious troubles finding anyone who has used the CAN controller on a SAM E5 device and the same sam.h dependency. I continued by porting over more of my I2C code. In total I worked on this for about 2.5 hours today. GitHub will have a commit by end of day along with updated pdf. VS Code configs continue to delay progress, but not majorly. We have scheduled a virtual meeting for Wednesday January 31st.
 
 \paragraph{JAN 31}
 Today we had a group meeting. The minutes will be in the notes. Jacob helped me debug my debugger issues and it appears to be a bunch of version issues. I think its time to setup a Docker. I think Landon may have one. I spent about an hour in the meeting and and additional hour working on the silly version stuff. 
+\section{February}
+\subsection{February 5-9}
+\paragraph{FEB 5} I spent some time attempting Landons docker but I quickly abandoned that when I had the realization that python source has a make command to do an altinstall alongside the main install. This finally got gdb working, but my debug still does not work. It no longer hangs as it did before but I an getting no response back from the device. Perhaps my USB cable actually is bad. I will attempt a few other to see if this fixes the problem. Only about an hour spent today with no major coding. Intellisense still broken and I hate VS code. 
+\paragraph{FEB 7} I finally have all my old code ported over. I am now testing. I suspect the new sysTimer settings have complicated things. The button no longer works. I quickly re-installed the very cool named project kyber and tested the button with my old code. It works "flawlessly" in the sense of it works as it did before. Button works, gyro communicates. I have even tried directly copying and not reformatting my code, again does not work. Must investigate settings more but wont let it slow me down for now. Here is my game plan:
+\begin{itemize}
+    \item Finish CAN drivers
+    \item Get I2C get gyro data on a schedule
+    \item Attempt to send gyro data over CAN
+\end{itemize}
+As far as continuing to debug my old code, I am going to attempt to set up another timer and PWM it to see exactly how fast the timers are moving. The force is with me, debug is now working, I tried some more stuff and eventually put in a new usb cable, not sure if that was it. Maybe my uhhhhh usb cable was "bad" or "crap" or other less civil synonyms. I can now remove this burden from my todo list. I can now use this for debugging my button and other code. Had group meeting. Finished up some code before I called it for the day and changed focus. 
 \section{NOTES}
 \include{CAN}
 \includepdf[]{MeetingMinutes/Jan31/Jan31.pdf}
