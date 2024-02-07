@@ -13,5 +13,8 @@
       "makeArgs": ["clean"]
     }
   ],
-  "C_Cpp.errorSquiggles": "enabled"
+  "C_Cpp.errorSquiggles": "enabled",
+  "files.associations": {
+    "sam.h": "c"
+  }
 }

@@ -6,7 +6,7 @@ void clkCAN(){
 	while((GCLK_REGS->GCLK_PCHCTRL[CAN0_GCLK_ID] & GCLK_PCHCTRL_CHEN_Msk) != GCLK_PCHCTRL_CHEN_Msk){
 		//wait for sync
 	}//while
-
+	
     MCLK_REGS->MCLK_AHBMASK |= MCLK_AHBMASK_CAN0_Msk;
 
 }//clkCAN
@@ -22,11 +22,11 @@ CAN0_REGS->CAN_CCCR = CAN_CCCR_INIT_Msk;
 
 //We finish but resetting CCCR.INIT as per 39.6.2.1
 CAN0_REGS->CAN_CCCR = CAN_CCCR_INIT_Msk;
-CAN0_REGS->
+
 }
 
 
-void initCAN0(){
+void CAN0Init(){
 
 //Initiate CAN0 TX port
 PORT_REGS->GROUP[0].PORT_PINCFG[22] |= PORT_PINCFG_PMUXEN_Msk;

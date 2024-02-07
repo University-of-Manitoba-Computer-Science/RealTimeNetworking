@@ -18,7 +18,6 @@ void clkI2C(){
 	MCLK_REGS->MCLK_APBBMASK |= MCLK_APBBMASK_SERCOM2_Msk;
 
 
-
 }//clkI2C
 
 void initI2C(){

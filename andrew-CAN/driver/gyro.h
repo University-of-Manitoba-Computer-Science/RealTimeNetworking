@@ -18,9 +18,6 @@
 #define WRITE_BUF_SIZE 32
 
 
-volatile  signed int readBuffer[READ_BUF_SIZE];
-volatile signed int writeBuffer[WRITE_BUF_SIZE];
-
 
 void accelOnlyMode();
 

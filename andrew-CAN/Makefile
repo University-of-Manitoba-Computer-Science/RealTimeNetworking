@@ -12,12 +12,12 @@ CC=arm-none-eabi-gcc
 DEVICE_UPPER=$(shell echo $(DEVICE) | tr  '[:lower:]' '[:upper:]')
 
 
-INCLUDE_PATHS=-I../$(PACK)/include -I../Core/include -Iinclude -Idriver
+INCLUDE_PATHS=-I../$(PACK)/include -I../Core/include -I./driver
 ASFLAGS=-mthumb -mcpu=$(CPU) -D__$(DEVICE_UPPER)__ -O1 -ffunction-sections -Wall
 CFLAGS=-x c -mthumb -mcpu=$(CPU) -D__$(DEVICE_UPPER)__ -O1 -ffunction-sections -Wall -c -std=gnu99
 LDFLAGS=-Wl,--start-group -lm  -Wl,--end-group -Wl,--gc-sections -mthumb -mcpu=$(CPU) -T../$(PACK)/gcc/gcc/$(DEVICE)_flash.ld 
 
-SYS_OBJS=../$(PACK)/gcc/system_$(DEVICE).o ../$(PACK)/gcc/gcc/startup_$(DEVICE).o dcc_stdio.o
+SYS_OBJS=../$(PACK)/gcc/system_$(DEVICE).o ../$(PACK)/gcc/gcc/startup_$(DEVICE).o dcc_stdio.o ./driver/button.o ./driver/can.o ./driver/i2c.o
 
 debug: CFLAGS += -g
 debug: clean all
@@ -38,7 +38,7 @@ release: clean all
 	arm-none-eabi-size $*.elf
 
 clean:
-	rm -f *.o *.elf *.hex *.lss
+	rm -f *.o *.elf *.hex *.lss && rm -f ./driver/*.o
 
 # put the executable on the device
 %-install: %.elf

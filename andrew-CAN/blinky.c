@@ -1,28 +1,65 @@
 #include "sam.h"
-
 #include "dcc_stdio.h"
 #include "can.h"
+#include "i2c.h"
+#include "button.h"
 #include <assert.h>
 
+
+#define DEBUG_WAIT 10000000UL
 // setup our heartbeat to be 1ms: we overflow at 1ms intervals with a 120MHz clock
 // uses the SysTicks unit so that we get reliable debugging (timer stops on breakpoints)
 #define MS_TICKS 120000UL
 
 // number of millisecond between LED flashes
 #define LED_FLASH_MS 250UL
-
-#define EXTINT15_MASK 0x8000
+#define GYRO_CHECK_MS 510UL
+void heartInit();
 
 // NOTE: this overflows every ~50 days, so I'm not going to care here...
 volatile uint32_t msCount = 0;
+
+
+void initAllPorts(){
+
+    // LED output
+  PORT_REGS->GROUP[0].PORT_DIRSET = PORT_PA14;
+  PORT_REGS->GROUP[0].PORT_OUTSET = PORT_PA14;
+
+  port15Init(); //init button ports
+  sercom2Init(); //init sercom2 -> i2c ports
+  CAN0Init(); //init CAN0 ports
+
+}//initAllPorts
+
+void initAllClks(){
+
+  clkButton();
+  clkI2C();
+  clkCAN();
+
+}//initAllClks
+
+void initAll(){
+
+  heartInit();
+  initAllClks();
+  initAllPorts();
+  initI2C();
+  initButton();
+  initCAN();
+
+
+  
+}
+
 
 // provides debugger only assertion support
 // we are providing the routine called by the standard assert marcro in assert.h
 // if NDEBUG is defined (for release code) the macro does *not* call this function, it's a no-op
 // NOTE: the standard definition has a no_return attribute which we are *not* doing; we breakpoint but can continue execution
 //       we'll live with this one warning...
-void __assert_func(const char *fileName, int lineNum, const char *caller, const char *expression)
-{
+void __assert_func(const char *fileName, int lineNum, const char *caller, const char *expression){
   // don't really need any of this printing as the debugger shows all of this as part of the SIGTRAP information
   dbg_write_str("Assertion '");
   dbg_write_str(expression);
@@ -44,8 +81,7 @@ void __assert_func(const char *fileName, int lineNum, const char *caller, const 
     __BKPT(0);
 }
 
-void heartInit()
-{
+void heartInit(){
   // setup the main clock/CPU clock to run at 120MHz
 
   // set generator 2 to use DFLL48M as source; with a divider of 48 that gives us 1MHz
@@ -89,54 +125,29 @@ void heartInit()
   SysTick_Config(MS_TICKS);
 }
 
-void buttonInit()
-{
-  // switch input on PA15, processed as an external interrupt
-  PORT_REGS->GROUP[0].PORT_DIRCLR = PORT_PA15;
-  PORT_REGS->GROUP[0].PORT_PINCFG[15] |= PORT_PINCFG_PMUXEN_Msk;
-  PORT_REGS->GROUP[0].PORT_PMUX[7] |= PORT_PMUX_PMUXO_A;
-
-  PORT_REGS->GROUP[0].PORT_OUTSET = PORT_PA15;
-  PORT_REGS->GROUP[0].PORT_PINCFG[15] |= PORT_PINCFG_PULLEN_Msk;
-
-  // have to enable the interrupt line in the system level REG
-  NVIC_EnableIRQ(EIC_EXTINT_15_IRQn);
-
-  MCLK_REGS->MCLK_APBAMASK |= MCLK_APBAMASK_EIC_Msk;
-
-  // the button is noisy so we keep it slow and lots of samples for filtering -- not great but it does the job (usually)
-  EIC_REGS->EIC_CONFIG[1] |= ((uint32_t)(EXTINT15_MASK) << 16) | EIC_CONFIG_SENSE7_RISE;
-  EIC_REGS->EIC_DEBOUNCEN |= EXTINT15_MASK;
-  EIC_REGS->EIC_DPRESCALER |= EIC_DPRESCALER_TICKON_Msk | EIC_DPRESCALER_STATES1_Msk | EIC_DPRESCALER_PRESCALER1_DIV64;
-  EIC_REGS->EIC_INTENSET |= EXTINT15_MASK;
-  EIC_REGS->EIC_CTRLA |= EIC_CTRLA_CKSEL_CLK_ULP32K | EIC_CTRLA_ENABLE_Msk;
-}
 
 // Fires every 1ms
-void SysTick_Handler()
-{
+void SysTick_Handler(){
   msCount++;
 }
 
 // ISR for  external interrupt 15, add processing code as required...
-void EIC_EXTINT_15_Handler()
-{
+void EIC_EXTINT_15_Handler(){
+  PORT_REGS->GROUP[0].PORT_OUTTGL = PORT_PA14;
   // clear the interrupt! and go to the next operating mode
   EIC_REGS->EIC_INTFLAG |= EXTINT15_MASK;
 }
 
-void test()
-{
+void test(){
   dbg_write_str("beforee");
   PORT_REGS->GROUP[0].PORT_OUTTGL = PORT_PA14;
   dbg_write_str("afterr");
 }
 
-int main(void)
-{
+int main(void){
+
 #ifndef NDEBUG
-  for (int i = 0; i < 100000; i++)
-    ;
+  for (int i = 0; i < DEBUG_WAIT; i++);
 #endif
 
   // NOTE: the silkscreen on the curiosity board is WRONG! it's PB4 and PB5 NOT PA4 and PA5
@@ -144,9 +155,7 @@ int main(void)
   // see the header files within include/component for register definitions, which align with the data sheet for the processor
   // e.g. port.h contains the masks and definitions for manipulating gpio
 
-  // LED output
-  PORT_REGS->GROUP[0].PORT_DIRSET = PORT_PA14;
-  PORT_REGS->GROUP[0].PORT_OUTSET = PORT_PA14;
+
 
   // enable cache
   // tradeoff: +: really helps with repeated code/data (like when doing animations in a game)
@@ -158,16 +167,16 @@ int main(void)
   // sleep to idle (wake on interrupts)
   PM_REGS->PM_SLEEPCFG |= PM_SLEEPCFG_SLEEPMODE_IDLE;
 
-  heartInit();
-  buttonInit();
+  initAll();
 
   // we want interrupts!
   __enable_irq();
 
   // some example logging calls
 #ifndef NDEBUG
-  dbg_write_str("hello world");
+  dbg_write_str("~~~DEBUG ENABLED~~~");
 
+/*
   dbg_write_char('t');
   dbg_write_char('e');
   dbg_write_char('s');
@@ -182,11 +191,11 @@ int main(void)
 
   static const unsigned char test_u8[] = {0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xAA, 0xBB, 0xCC, 0XDD, 0xEE, 0xFF};
   dbg_write_u8(test_u8, 16);
+  */
 #endif
-
+  PORT_REGS->GROUP[0].PORT_OUTTGL = PORT_PA14;
   // sleep until we have an interrupt
-  while (1)
-  {
+  while (1){
     __WFI();
     /* uncomment the line below to trace every time this code is reached
      * WARNING: making this call induces a SIGNIFICANT delay, use sparingly and wisely (if at all)
@@ -200,9 +209,15 @@ int main(void)
     // assert(msCount != 250);
 
     // TODO: make proper task scheduling!
-    if ((msCount % LED_FLASH_MS) == 0)
-    {
+    if ((msCount % LED_FLASH_MS) == 0){
       PORT_REGS->GROUP[0].PORT_OUTTGL = PORT_PA14;
+      #ifndef NDEBUG
+        dbg_write_u32(&msCount, 1);
+      #endif
+     
+    }
+    else if ((msCount % GYRO_CHECK_MS) == 0){
+    
       
       //test();
     }
