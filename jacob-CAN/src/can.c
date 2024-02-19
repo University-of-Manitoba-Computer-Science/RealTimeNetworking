@@ -1,6 +1,7 @@
 #include "can.h"
 
 #include <sam.h>
+#include <string.h>
 
 #define STD_FILT_ELEMENT_SIZE      1
 #define EXT_FILT_ELEMENT_SIZE      2
@@ -114,5 +115,8 @@ void canInit()
 
 void send_message(uint8_t *data, int len, int buf_i)
 {
-    // TODO
+    int offset = TX_BUFFER_OFFSET + (buf_i * TX_BUFFER_ELEMENT_SIZE);
+    memcpy(&msg_ram[offset], data, len);
+
+    // TODO queue the message to send
 }
