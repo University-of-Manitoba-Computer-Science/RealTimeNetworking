@@ -18,14 +18,22 @@
 #define TX_EVENT_FIFO_SIZE 32
 #define TX_BUFFER_SIZE     32
 
+#define STD_FILT_OFFSET 0
+#define EXT_FILT_OFFSET                                                        \
+    (STD_FILT_OFFSET) + (STD_FILT_SIZE) * (STD_FILT_ELEMENT_SIZE)
+#define RX_FIFO0_OFFSET                                                        \
+    (EXT_FILT_OFFSET) + (EXT_FILT_SIZE) * (EXT_FILT_ELEMENT_SIZE)
+#define RX_FIFO1_OFFSET                                                        \
+    (RX_FIFO0_OFFSET) + (RX_FIFO0_SIZE) * (RX_FIFO0_ELEMENT_SIZE)
+#define RX_BUFFER_OFFSET                                                       \
+    (RX_FIFO1_OFFSET) + (RX_FIFO1_SIZE) * (RX_FIFO1_ELEMENT_SIZE)
+#define TX_EVENT_FIFO_OFFSET                                                   \
+    (RX_BUFFER_OFFSET) + (RX_BUFFER_SIZE) * (RX_BUFFER_ELEMENT_SIZE)
+#define TX_BUFFER_OFFSET                                                       \
+    (TX_BUFFER_EVENT_FIFO_OFFSET) +                                            \
+        (TX_BUFFER_EVENT_FIFO_SIZE) * (TX_BUFFER_EVENT_FIFO_ELEMENT_SIZE)
 #define MSG_RAM_SIZE                                                           \
-    (STD_FILT_SIZE) * (STD_FILT_ELEMENT_SIZE) +                                \
-        (EXT_FILT_SIZE) * (EXT_FILT_ELEMENT_SIZE) +                            \
-        (RX_FIFO0_SIZE) * (RX_FIFO0_ELEMENT_SIZE) +                            \
-        (RX_FIFO1_SIZE) * (RX_FIFO1_ELEMENT_SIZE) +                            \
-        (RX_BUFFER_SIZE) * (RX_BUFFER_ELEMENT_SIZE) +                          \
-        (TX_EVENT_FIFO_SIZE) * (TX_EVENT_FIFO_ELEMENT_SIZE) +                  \
-        (TX_BUFFER_SIZE) * (TX_BUFFER_ELEMENT_SIZE)
+    (TX_BUFFER_OFFSET) + (TX_BUFFER_SIZE) * (TX_BUFFER_ELEMENT_SIZE)
 
 static uint32_t msg_ram[MSG_RAM_SIZE];
 
