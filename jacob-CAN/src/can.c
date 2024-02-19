@@ -31,8 +31,7 @@
 #define TX_EVENT_FIFO_OFFSET                                                   \
     (RX_BUFFER_OFFSET) + (RX_BUFFER_SIZE) * (RX_BUFFER_ELEMENT_SIZE)
 #define TX_BUFFER_OFFSET                                                       \
-    (TX_BUFFER_EVENT_FIFO_OFFSET) +                                            \
-        (TX_BUFFER_EVENT_FIFO_SIZE) * (TX_BUFFER_EVENT_FIFO_ELEMENT_SIZE)
+    (TX_EVENT_FIFO_OFFSET) + (TX_EVENT_FIFO_SIZE) * (TX_EVENT_FIFO_ELEMENT_SIZE)
 #define MSG_RAM_SIZE                                                           \
     (TX_BUFFER_OFFSET) + (TX_BUFFER_SIZE) * (TX_BUFFER_ELEMENT_SIZE)
 
