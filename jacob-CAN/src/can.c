@@ -2,6 +2,33 @@
 
 #include <sam.h>
 
+#define STD_FILT_ELEMENT_SIZE      1
+#define EXT_FILT_ELEMENT_SIZE      2
+#define RX_FIFO0_ELEMENT_SIZE      18
+#define RX_FIFO1_ELEMENT_SIZE      18
+#define RX_BUFFER_ELEMENT_SIZE     18
+#define TX_EVENT_FIFO_ELEMENT_SIZE 2
+#define TX_BUFFER_ELEMENT_SIZE     18
+
+#define STD_FILT_SIZE      128
+#define EXT_FILT_SIZE      64
+#define RX_FIFO0_SIZE      64
+#define RX_FIFO1_SIZE      64
+#define RX_BUFFER_SIZE     64
+#define TX_EVENT_FIFO_SIZE 32
+#define TX_BUFFER_SIZE     32
+
+#define MSG_RAM_SIZE                                                           \
+    (STD_FILT_SIZE) * (STD_FILT_ELEMENT_SIZE) +                                \
+        (EXT_FILT_SIZE) * (EXT_FILT_ELEMENT_SIZE) +                            \
+        (RX_FIFO0_SIZE) * (RX_FIFO0_ELEMENT_SIZE) +                            \
+        (RX_FIFO1_SIZE) * (RX_FIFO1_ELEMENT_SIZE) +                            \
+        (RX_BUFFER_SIZE) * (RX_BUFFER_ELEMENT_SIZE) +                          \
+        (TX_EVENT_FIFO_SIZE) * (TX_EVENT_FIFO_ELEMENT_SIZE) +                  \
+        (TX_BUFFER_SIZE) * (TX_BUFFER_ELEMENT_SIZE)
+
+static uint32_t msg_ram[MSG_RAM_SIZE];
+
 void canInit()
 {
     // setup TX port
@@ -37,17 +64,47 @@ void canInit()
     // TODO do we need to set bit rate? Using defaults for now
 
     // Setting up message RAM
-    CAN0_REGS->CAN_SIDFC = CAN_SIDFC_FLSSA(0) | CAN_SIDFC_LSS(128);
-    CAN0_REGS->CAN_XIDFC = CAN_XIDFC_FLESA(128) | CAN_XIDFC_LSE(64);
-    CAN0_REGS->CAN_RXF0C =
-        CAN_RXF0C_F0OM_Msk | CAN_RXF0C_F0S(0) | CAN_RXF0C_F0SA(256);
-    CAN0_REGS->CAN_RXF0C =
-        CAN_RXF0C_F0OM_Msk | CAN_RXF0C_F0S(0) | CAN_RXF0C_F0SA(1408);
-    CAN0_REGS->CAN_TXBC = CAN_TXBC_TFQM_Msk | CAN_TXBC_TFQS(32) |
-                          CAN_TXBC_NDTB(32) | CAN_TXBC_TBSA(3776);
+    uint32_t *addr = msg_ram;
+
+    // Standard filter RAM conf
+    CAN0_REGS->CAN_SIDFC = CAN_SIDFC_FLSSA(addr) | CAN_SIDFC_LSS(STD_FILT_SIZE);
+    addr += STD_FILT_SIZE * STD_FILT_ELEMENT_SIZE;
+
+    // Extended filter RAM conf
+    CAN0_REGS->CAN_XIDFC = CAN_XIDFC_FLESA(addr) | CAN_XIDFC_LSE(EXT_FILT_SIZE);
+    addr += EXT_FILT_SIZE * EXT_FILT_ELEMENT_SIZE;
+
+    // RX FIFO 0 RAM conf
+    CAN0_REGS->CAN_RXF0C = CAN_RXF0C_F0OM_Msk | CAN_RXF0C_F0SA(addr) |
+                           CAN_RXF0C_F0S(RX_FIFO0_SIZE);
+    addr += RX_FIFO0_SIZE * RX_FIFO0_ELEMENT_SIZE;
+
+    // RX FIFO 1 RAM conf
+    CAN0_REGS->CAN_RXF1C = CAN_RXF1C_F1OM_Msk | CAN_RXF1C_F1SA(addr) |
+                           CAN_RXF1C_F1S(RX_FIFO1_SIZE);
+    addr += RX_FIFO1_SIZE * RX_FIFO1_ELEMENT_SIZE;
+
+    // RX Buffer RAM conf
+    CAN0_REGS->CAN_RXBC  = CAN_RXBC_RBSA(addr);
+    addr                += RX_BUFFER_SIZE * RX_BUFFER_ELEMENT_SIZE;
+    // TODO why isn't there an option to set the buffer size?
+
+    // TX Event FIFO RAM conf
+    CAN0_REGS->CAN_TXEFC =
+        CAN_TXEFC_EFSA(addr) | CAN_TXEFC_EFS(TX_EVENT_FIFO_SIZE);
+    addr += TX_EVENT_FIFO_SIZE * TX_EVENT_FIFO_ELEMENT_SIZE;
+
+    // RX Buffer RAM conf
+    CAN0_REGS->CAN_TXBC = CAN_TXBC_TBSA(addr) | CAN_TXBC_NDTB(TX_BUFFER_SIZE) |
+                          CAN_TXBC_TFQS(TX_BUFFER_SIZE);
 
     // unset CCCR.INIT once synchronized
     while ((CAN0_REGS->CAN_CCCR & CAN_CCCR_INIT_Msk) != CAN_CCCR_INIT_Msk)
         ;
     CAN0_REGS->CAN_CCCR &= ~CAN_CCCR_INIT_Msk;
+}
+
+void send_message(uint8_t *data, int len, int buf_i)
+{
+    // TODO
 }
