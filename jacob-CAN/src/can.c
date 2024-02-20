@@ -3,21 +3,17 @@
 #include <sam.h>
 #include <string.h>
 
-// TODO clean up this garbage I copied from the SAMC21 code
-#define MCAN_RAM_BUF_ID_STD_Msk (0x7ffu << MCAN_RAM_BUF_ID_STD_Pos)
-#define MCAN_RAM_BUF_ID_STD_Pos 18
+#define STD_BUF_ID_Pos    18
+#define STD_BUF_ID_Msk    (0x7ffu << STD_BUF_ID_Pos)
+#define STD_BUF_ID(value) (STD_BUF_ID_Msk & (_UINT32_(value) << STD_BUF_ID_Pos))
 
-#define MCAN_RAM_BUF_MM_Pos 24
-#define MCAN_RAM_BUF_MM_Msk                                                    \
-    (0xffu << MCAN_RAM_BUF_MM_Pos) /**< \brief (T1) Message Marker */
-#define MCAN_RAM_BUF_MM(value)                                                 \
-    ((MCAN_RAM_BUF_MM_Msk & ((value) << MCAN_RAM_BUF_MM_Pos)))
+#define MM_BUF_Pos    24
+#define MM_BUF_Msk    (0xffu << MM_BUF_Pos)
+#define MM_BUF(value) ((MM_BUF_Msk & ((value) << MM_BUF_Pos)))
 
-#define MCAN_RAM_BUF_DLC_Pos 16
-#define MCAN_RAM_BUF_DLC_Msk                                                   \
-    (0xfu << MCAN_RAM_BUF_DLC_Pos) /**< \brief (T1, R1) Data Length Code */
-#define MCAN_RAM_BUF_DLC(value)                                                \
-    ((MCAN_RAM_BUF_DLC_Msk & ((value) << MCAN_RAM_BUF_DLC_Pos)))
+#define DLC_BUF_Pos    16
+#define DLC_BUF_Msk    (0xfu << DLC_BUF_Pos)
+#define DLC_BUF(value) ((DLC_BUF_Msk & ((value) << DLC_BUF_Pos)))
 
 #define STD_FILT_ELEMENT_SIZE      1
 #define EXT_FILT_ELEMENT_SIZE      2
@@ -86,7 +82,6 @@ void canInit()
     CAN0_REGS->CAN_GFC |= CAN_GFC_ANFS(2) | CAN_GFC_ANFE(2);
 
     // TODO do we need to set bit rate? Using defaults for now
-    CAN0_REGS->CAN_DBTP |= CAN_DBTP_DBRP(1);
 
     // Setting up message RAM
     uint32_t *addr = msg_ram;
@@ -119,7 +114,7 @@ void canInit()
         CAN_TXEFC_EFSA(addr) | CAN_TXEFC_EFS(TX_EVENT_FIFO_SIZE);
     addr += TX_EVENT_FIFO_SIZE * TX_EVENT_FIFO_ELEMENT_SIZE;
 
-    // RX Buffer RAM conf
+    // TX Buffer RAM conf
     CAN0_REGS->CAN_TXBC = CAN_TXBC_TBSA(addr) | CAN_TXBC_NDTB(TX_BUFFER_SIZE) |
                           CAN_TXBC_TFQS(TX_BUFFER_SIZE);
 
@@ -129,18 +124,23 @@ void canInit()
     CAN0_REGS->CAN_CCCR &= ~CAN_CCCR_INIT_Msk;
 }
 
+// TODO do we even need more than one TX slot?
 void send_message(uint8_t *data, int len, int buf_i, int id)
 {
-    int offset = TX_BUFFER_OFFSET + (buf_i * TX_BUFFER_ELEMENT_SIZE);
-    msg_ram[offset++] =
-        MCAN_RAM_BUF_ID_STD_Msk & ((id) << MCAN_RAM_BUF_ID_STD_Pos);
-    uint32_t val      = MCAN_RAM_BUF_MM(0) | MCAN_RAM_BUF_DLC((uint32_t) len);
-    msg_ram[offset++] = val;
+    // find start offset of buffer index
+    // TODO 4 doesn't seem correct, but it is the only value that works
+    // seems like only 2 bytes are allowed in each queue element, weird...
+    int offset = TX_BUFFER_OFFSET + (buf_i * 4);
 
-    CAN0_REGS->CAN_TXBTIE |= 1 << buf_i;
+    // set the first word of the header
+    msg_ram[offset++] = STD_BUF_ID(id);
 
+    // set the second word of the header
+    msg_ram[offset++] = MM_BUF(0) | DLC_BUF((uint32_t) len);
+
+    // set data field of message
     memcpy(&msg_ram[offset], data, len);
 
-    // TODO queue the message to send
+    // queue the message to send
     CAN0_REGS->CAN_TXBAR |= 1 << buf_i;
 }

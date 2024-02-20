@@ -61,7 +61,7 @@ int main(void)
         __WFI();
         if ((msCount % LED_FLASH_MS) == 0) {
             uint8_t data[2] = {0x12, 0x34};
-            send_message(data, 2, 0, 0x555);
+            send_message(data, 2, 2, 0x555);
 
             PORT_REGS->GROUP[0].PORT_OUTTGL = PORT_PA14;
         }
