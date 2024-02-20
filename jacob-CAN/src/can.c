@@ -134,7 +134,7 @@ void send_message(uint8_t *data, int len, int buf_i, int id)
     int offset = TX_BUFFER_OFFSET + (buf_i * TX_BUFFER_ELEMENT_SIZE);
     msg_ram[offset++] =
         MCAN_RAM_BUF_ID_STD_Msk & ((id) << MCAN_RAM_BUF_ID_STD_Pos);
-    uint32_t val      = MCAN_RAM_BUF_MM(0) | MCAN_RAM_BUF_DLC((uint32_t) 0);
+    uint32_t val      = MCAN_RAM_BUF_MM(0) | MCAN_RAM_BUF_DLC((uint32_t) len);
     msg_ram[offset++] = val;
 
     CAN0_REGS->CAN_TXBTIE |= 1 << buf_i;
