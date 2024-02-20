@@ -118,4 +118,5 @@ void send_message(uint8_t *data, int len, int buf_i)
     memcpy(&msg_ram[offset], data, len);
 
     // TODO queue the message to send
+    CAN0_REGS->CAN_TXBAR |= 1 << buf_i;
 }
