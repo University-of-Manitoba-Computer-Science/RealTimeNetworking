@@ -3,6 +3,22 @@
 #include <sam.h>
 #include <string.h>
 
+// TODO clean up this garbage I copied from the SAMC21 code
+#define MCAN_RAM_BUF_ID_STD_Msk (0x7ffu << MCAN_RAM_BUF_ID_STD_Pos)
+#define MCAN_RAM_BUF_ID_STD_Pos 18
+
+#define MCAN_RAM_BUF_MM_Pos 24
+#define MCAN_RAM_BUF_MM_Msk                                                    \
+    (0xffu << MCAN_RAM_BUF_MM_Pos) /**< \brief (T1) Message Marker */
+#define MCAN_RAM_BUF_MM(value)                                                 \
+    ((MCAN_RAM_BUF_MM_Msk & ((value) << MCAN_RAM_BUF_MM_Pos)))
+
+#define MCAN_RAM_BUF_DLC_Pos 16
+#define MCAN_RAM_BUF_DLC_Msk                                                   \
+    (0xfu << MCAN_RAM_BUF_DLC_Pos) /**< \brief (T1, R1) Data Length Code */
+#define MCAN_RAM_BUF_DLC(value)                                                \
+    ((MCAN_RAM_BUF_DLC_Msk & ((value) << MCAN_RAM_BUF_DLC_Pos)))
+
 #define STD_FILT_ELEMENT_SIZE      1
 #define EXT_FILT_ELEMENT_SIZE      2
 #define RX_FIFO0_ELEMENT_SIZE      18
@@ -70,6 +86,7 @@ void canInit()
     CAN0_REGS->CAN_GFC |= CAN_GFC_ANFS(2) | CAN_GFC_ANFE(2);
 
     // TODO do we need to set bit rate? Using defaults for now
+    CAN0_REGS->CAN_DBTP |= CAN_DBTP_DBRP(1);
 
     // Setting up message RAM
     uint32_t *addr = msg_ram;
@@ -112,9 +129,16 @@ void canInit()
     CAN0_REGS->CAN_CCCR &= ~CAN_CCCR_INIT_Msk;
 }
 
-void send_message(uint8_t *data, int len, int buf_i)
+void send_message(uint8_t *data, int len, int buf_i, int id)
 {
     int offset = TX_BUFFER_OFFSET + (buf_i * TX_BUFFER_ELEMENT_SIZE);
+    msg_ram[offset++] =
+        MCAN_RAM_BUF_ID_STD_Msk & ((id) << MCAN_RAM_BUF_ID_STD_Pos);
+    uint32_t val      = MCAN_RAM_BUF_MM(0) | MCAN_RAM_BUF_DLC((uint32_t) 0);
+    msg_ram[offset++] = val;
+
+    CAN0_REGS->CAN_TXBTIE |= 1 << buf_i;
+
     memcpy(&msg_ram[offset], data, len);
 
     // TODO queue the message to send
