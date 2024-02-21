@@ -4,6 +4,6 @@
 #include <stdint.h>
 
 void canInit(void);
-void send_message(uint8_t *data, int len, int buf_i, int id);
+void put_message(uint8_t *data, int len);
 
 #endif // CAN_H_

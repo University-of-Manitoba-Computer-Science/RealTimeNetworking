@@ -3,6 +3,8 @@
 #include <sam.h>
 #include <string.h>
 
+#include "dcc_stdio.h"
+
 #define STD_BUF_ID_Pos    18
 #define STD_BUF_ID_Msk    (0x7ffu << STD_BUF_ID_Pos)
 #define STD_BUF_ID(value) (STD_BUF_ID_Msk & (_UINT32_(value) << STD_BUF_ID_Pos))
@@ -17,11 +19,11 @@
 
 #define STD_FILT_ELEMENT_SIZE      1
 #define EXT_FILT_ELEMENT_SIZE      2
-#define RX_FIFO0_ELEMENT_SIZE      18
-#define RX_FIFO1_ELEMENT_SIZE      18
-#define RX_BUFFER_ELEMENT_SIZE     18
+#define RX_FIFO0_ELEMENT_SIZE      4
+#define RX_FIFO1_ELEMENT_SIZE      4
+#define RX_BUFFER_ELEMENT_SIZE     4
 #define TX_EVENT_FIFO_ELEMENT_SIZE 2
-#define TX_BUFFER_ELEMENT_SIZE     18
+#define TX_BUFFER_ELEMENT_SIZE     4
 
 #define STD_FILT_SIZE      128
 #define EXT_FILT_SIZE      64
@@ -61,8 +63,19 @@ void canInit()
     PORT_REGS->GROUP[0].PORT_PINCFG[23] |= PORT_PINCFG_PMUXEN_Msk;
     PORT_REGS->GROUP[0].PORT_PMUX[11]   |= PORT_PMUX_PMUXO_I;
 
+    // set generator 3 to use DFLL48M as a source; with a divider of 3 that
+    // gives us 16 MHz
+    // TODO experimentally found that a division factor of 3 gives 1 MHz CAN
+    // output. I do not know why this works
+    GCLK_REGS->GCLK_GENCTRL[3] =
+        GCLK_GENCTRL_DIV(3) | GCLK_GENCTRL_SRC_DFLL | GCLK_GENCTRL_GENEN_Msk;
+    while ((GCLK_REGS->GCLK_SYNCBUSY & GCLK_SYNCBUSY_GENCTRL_GCLK3) ==
+           GCLK_SYNCBUSY_GENCTRL_GCLK3)
+        ; /* Wait for synchronization */
+
     // setup clock
-    GCLK_REGS->GCLK_PCHCTRL[27] = GCLK_PCHCTRL_CHEN_Msk;
+    GCLK_REGS->GCLK_PCHCTRL[27] =
+        GCLK_PCHCTRL_GEN_GCLK3 | GCLK_PCHCTRL_CHEN_Msk;
     while ((GCLK_REGS->GCLK_PCHCTRL[27] & GCLK_PCHCTRL_CHEN_Msk) !=
            GCLK_PCHCTRL_CHEN_Msk)
         ;
@@ -73,15 +86,14 @@ void canInit()
     CAN0_REGS->CAN_CCCR |= CAN_CCCR_CCE_Msk;  // enable configuration
 
     // TODO remove once CAN driver is working over loopback
+    // TODO this prevents the endless stream of TX
     CAN0_REGS->CAN_CCCR |= CAN_CCCR_TEST_Msk; // Enable test mode
-    CAN0_REGS->CAN_TEST  = CAN_TEST_LBCK_Msk; // Enable loopback mode
+    // CAN0_REGS->CAN_TEST  = CAN_TEST_LBCK_Msk; // Enable loopback mode
 
     // Reject non-matching frames
     // TODO I don't know if we need this, but testing some filtering seems like
     // a good idea
     CAN0_REGS->CAN_GFC |= CAN_GFC_ANFS(2) | CAN_GFC_ANFE(2);
-
-    // TODO do we need to set bit rate? Using defaults for now
 
     // Setting up message RAM
     uint32_t *addr = msg_ram;
@@ -115,8 +127,10 @@ void canInit()
     addr += TX_EVENT_FIFO_SIZE * TX_EVENT_FIFO_ELEMENT_SIZE;
 
     // TX Buffer RAM conf
-    CAN0_REGS->CAN_TXBC = CAN_TXBC_TBSA(addr) | CAN_TXBC_NDTB(TX_BUFFER_SIZE) |
-                          CAN_TXBC_TFQS(TX_BUFFER_SIZE);
+    CAN0_REGS->CAN_TXBC =
+        CAN_TXBC_TBSA(addr) | CAN_TXBC_NDTB(0) | CAN_TXBC_TFQS(TX_BUFFER_SIZE);
+
+    for (int i = 0; i < TX_BUFFER_SIZE; ++i) CAN0_REGS->CAN_TXBTIE |= (1 << i);
 
     // unset CCCR.INIT once synchronized
     while ((CAN0_REGS->CAN_CCCR & CAN_CCCR_INIT_Msk) != CAN_CCCR_INIT_Msk)
@@ -124,23 +138,20 @@ void canInit()
     CAN0_REGS->CAN_CCCR &= ~CAN_CCCR_INIT_Msk;
 }
 
-// TODO do we even need more than one TX slot?
-void send_message(uint8_t *data, int len, int buf_i, int id)
+void put_message(uint8_t *data, int len)
 {
-    // find start offset of buffer index
-    // TODO 4 doesn't seem correct, but it is the only value that works
-    // seems like only 2 bytes are allowed in each queue element, weird...
-    int offset = TX_BUFFER_OFFSET + (buf_i * 4);
+    if ((CAN0_REGS->CAN_TXFQS & CAN_TXFQS_TFQF_Msk) == CAN_TXFQS_TFQF_Msk)
+        return; // don't send message if the queue is full
 
-    // set the first word of the header
-    msg_ram[offset++] = STD_BUF_ID(id);
+    uint32_t status = CAN0_REGS->CAN_TXFQS & CAN_TXFQS_TFQPI_Msk;
+    uint8_t  index  = status >> CAN_TXFQS_TFQPI_Pos;
+    dbg_write_u8(&index, 1);
+    dbg_write_char('\n');
 
-    // set the second word of the header
-    msg_ram[offset++] = MM_BUF(0) | DLC_BUF((uint32_t) len);
+    int offset        = TX_BUFFER_OFFSET + (index * TX_BUFFER_ELEMENT_SIZE);
+    msg_ram[offset++] = STD_BUF_ID(0x123);
+    msg_ram[offset++] = MM_BUF(0) | DLC_BUF((uint32_t) 1);
+    memcpy(&msg_ram[offset], &index, 1);
 
-    // set data field of message
-    memcpy(&msg_ram[offset], data, len);
-
-    // queue the message to send
-    CAN0_REGS->CAN_TXBAR |= 1 << buf_i;
+    CAN0_REGS->CAN_TXBAR |= 1 << index;
 }
