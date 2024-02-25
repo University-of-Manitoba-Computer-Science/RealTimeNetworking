@@ -284,3 +284,42 @@ void accelOnlyMode(){
 	initWrite(CTRL_REG6_XL,1,writeBuffer);
 
 }//accelOnlyMode
+
+void sampleXL(){
+
+
+	int xVal = 0;
+	int zVal = 0;
+	int yVal = 0; 
+
+	uint8_t readBuffer[READ_BUF_SIZE];
+	//get the values from the gyro and put into the read buffer
+	initRead((OUT_X_XL_START|AUTO_INC_Msk),6,readBuffer);
+	
+	//We should be in LSB @ lower address mode and we have a little endian micro controller
+	//So we need to shift the LSB which get first from the gyro
+	//See LSM9DS1 pg 53 BLE value
+	
+	//for some reason readBuffer has index 5 moved to 0 and shifting everything else over. 
+	
+	zVal = (signed int)(((0x00ff&(readBuffer[0]))<<8)|(0x00ff&(readBuffer[5])));
+	xVal = (signed int)(((0x00ff&(readBuffer[2]))<<8)|(0x00ff&(readBuffer[1])));
+	yVal = (signed int)(((0x00ff&(readBuffer[4]))<<8)|(0x00ff&(readBuffer[3])));
+	
+
+	/*
+	zVal = (int)(readBuffer[0]<<8);
+	xVal = (int)(readBuffer[2]<<8);
+	yVal = (int)(readBuffer[4]<<8);
+	*/
+/*
+	xSum = xSum - xWindow[curr] + xVal;
+	ySum = ySum - yWindow[curr] + yVal;
+	zSum = zSum - zWindow[curr] + zVal;
+	xWindow[curr] = xVal;
+	yWindow[curr] = yVal;
+	zWindow[curr] = zVal;
+	
+	curr = (curr+1)%WINDOW_SIZE;
+*/
+}//sampleXl

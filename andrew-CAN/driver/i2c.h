@@ -3,7 +3,7 @@
 #include <stdbool.h>
 #if !defined(I2C)
 #define I2C
-#define I2C_BAUD (64U)
+#define I2C_BAUD (256U)
 #define WRITE false
 #define READ true
 
@@ -33,5 +33,6 @@ void initTx(uint8_t addr, size_t bytes,volatile unsigned char *data, bool dir);
 void initRead(uint8_t addr, size_t bytes,volatile unsigned char *data);
 
 void accelOnlyMode();
+void sampleXL();
 
 #endif // I2C

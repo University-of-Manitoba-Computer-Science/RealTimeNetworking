@@ -214,6 +214,7 @@ int main(void){
       #ifndef NDEBUG
         dbg_write_u32(&msCount, 1);
       #endif
+      sampleXL();
      
     }
     else if ((msCount % GYRO_CHECK_MS) == 0){
