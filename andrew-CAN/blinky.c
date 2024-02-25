@@ -20,6 +20,8 @@ void heartInit();
 volatile uint32_t msCount = 0;
 
 
+static uint32_t msgRam[MSG_LIST_SIZE] = {1};
+
 void initAllPorts(){
 
     // LED output
@@ -47,7 +49,7 @@ void initAll(){
   initAllPorts();
   initI2C();
   initButton();
-  initCAN();
+  initCAN(*msgRam);
   accelOnlyMode();
 }
 
@@ -212,9 +214,13 @@ int main(void){
     if ((msCount % LED_FLASH_MS) == 0){
       PORT_REGS->GROUP[0].PORT_OUTTGL = PORT_PA14;
       #ifndef NDEBUG
-        dbg_write_u32(&msCount, 1);
+        dbg_write_u32(*msgRam, 1);
+        uint32_t test = CAN0_MSG_RAM_ADDR;
+        dbg_write_u32(test,1);
       #endif
-      sampleXL();
+
+
+      //sampleXL();
      
     }
     else if ((msCount % GYRO_CHECK_MS) == 0){

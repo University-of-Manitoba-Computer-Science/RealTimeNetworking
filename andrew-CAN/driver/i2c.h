@@ -3,7 +3,7 @@
 #include <stdbool.h>
 #if !defined(I2C)
 #define I2C
-#define I2C_BAUD (256U)
+#define I2C_BAUD (16U)
 #define WRITE false
 #define READ true
 
