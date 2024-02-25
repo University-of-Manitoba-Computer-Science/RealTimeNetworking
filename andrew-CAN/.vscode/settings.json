@@ -15,6 +15,7 @@
   ],
   "C_Cpp.errorSquiggles": "enabled",
   "files.associations": {
-    "sam.h": "c"
+    "sam.h": "c",
+    "gyro.h": "c"
   }
 }

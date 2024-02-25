@@ -1,5 +1,7 @@
 #include "sam.h"
 
+
+
 #if !defined(GYRO)
 #define GYRO
 
@@ -17,10 +19,13 @@
 #define READ_BUF_SIZE 1000
 #define WRITE_BUF_SIZE 32
 
+//uint8_t writeBuffer[WRITE_BUF_SIZE];
 
 
 void accelOnlyMode();
 
 
 #endif // GYRO
+
+
 

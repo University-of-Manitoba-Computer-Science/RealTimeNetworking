@@ -48,9 +48,7 @@ void initAll(){
   initI2C();
   initButton();
   initCAN();
-
-
-  
+  accelOnlyMode();
 }
 
 
@@ -146,6 +144,8 @@ void test(){
 
 int main(void){
 
+
+
 #ifndef NDEBUG
   for (int i = 0; i < DEBUG_WAIT; i++);
 #endif
@@ -174,7 +174,7 @@ int main(void){
 
   // some example logging calls
 #ifndef NDEBUG
-  dbg_write_str("~~~DEBUG ENABLED~~~");
+  dbg_write_str("~~~DEBUG ENABLED~~~\n");
 
 /*
   dbg_write_char('t');
