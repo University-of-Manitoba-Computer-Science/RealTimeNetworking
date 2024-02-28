@@ -19,8 +19,17 @@ void heartInit();
 // NOTE: this overflows every ~50 days, so I'm not going to care here...
 volatile uint32_t msCount = 0;
 
-
+//This is our CAN memory initialization
 static uint32_t msgRam[MSG_LIST_SIZE] = {1};
+static uint32_t *msgAddr = msgRam;
+static uint32_t txRam[MSG_LIST_SIZE];
+static uint32_t *txAddr = txRam;
+static uint32_t txEvent[MSG_LIST_SIZE];
+static uint32_t *eventAddr = txEvent; 
+static uint32_t rxRam[MSG_LIST_SIZE]; //Should i times 2 so I can initate both rx fifos?
+static uint32_t *rxAddr = rxRam;
+static uint32_t rxBuff[MSG_LIST_SIZE]; //Should i times 2 so I can initate both rx fifos?
+static uint32_t *rxBuffAddr = rxBuff;
 
 void initAllPorts(){
 
@@ -49,7 +58,7 @@ void initAll(){
   initAllPorts();
   initI2C();
   initButton();
-  initCAN(*msgRam);
+  initCAN(msgAddr,txAddr,rxAddr,eventAddr,rxBuffAddr);
   accelOnlyMode();
 }
 
@@ -214,9 +223,9 @@ int main(void){
     if ((msCount % LED_FLASH_MS) == 0){
       PORT_REGS->GROUP[0].PORT_OUTTGL = PORT_PA14;
       #ifndef NDEBUG
-        dbg_write_u32(*msgRam, 1);
-        uint32_t test = CAN0_MSG_RAM_ADDR;
-        dbg_write_u32(test,1);
+        dbg_write_u32(&msgAddr, 1);
+        uint32_t *test = (CAN0_REGS->CAN_SIDFC & CAN_SIDFC_FLSSA_Msk) >> CAN_SIDFC_FLSSA_Pos;
+        dbg_write_u32(&test,1);
       #endif
 
 
