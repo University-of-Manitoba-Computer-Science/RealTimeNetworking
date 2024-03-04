@@ -11,6 +11,7 @@
 #define QUANTA_SYNC 2UL
 
 #define MSG_LIST_SIZE 25
+#define MEM_SIZE MSG_LIST_SIZE*sizeof(uint32_t)
 
 void clkCAN();
 void initCAN(uint32_t *ram, uint32_t *tx, uint32_t *rx, uint32_t *event, uint32_t *rxbuff);

@@ -41,16 +41,16 @@ void initCAN(uint32_t *ram, uint32_t *tx, uint32_t *rx, uint32_t *event, uint32_
 	CAN0_REGS->CAN_NBTP = (CAN_NBTP_NTSEG1(QUANTA_BEFORE-2) | CAN_NBTP_NTSEG2(QUANTA_AFTER-1) | CAN_NBTP_NSJW(QUANTA_SYNC-1));
 
 	//SAMC21 demo sets message RAM starting addresses and element count here
-	CAN0_REGS->CAN_SIDFC = (CAN_SIDFC_FLSSA(ram) | CAN_SIDFC_LSS(MSG_LIST_SIZE)); //sets memorya ddr and size for message filter
+	CAN0_REGS->CAN_SIDFC = (CAN_SIDFC_FLSSA(ram) | CAN_SIDFC_LSS(MEM_SIZE)); //sets memorya ddr and size for message filter
 	
 	//SAMC21 demo sets Rx RAM starting addresses and element count here
-	CAN0_REGS->CAN_RXF0C = (CAN_RXF0C_F0SA(rx) | CAN_RXF0C_F0S(MSG_LIST_SIZE) | CAN_RXF0C_F0OM(0) | CAN_RXF0C_F0OM(0)); //sets Rx fifo  RAM starting address and size turns off watermarks and then turns on blocking mode for the fifo operation
+	CAN0_REGS->CAN_RXF0C = (CAN_RXF0C_F0SA(rx) | CAN_RXF0C_F0S(MEM_SIZE) | CAN_RXF0C_F0OM(0) | CAN_RXF0C_F0OM(0)); //sets Rx fifo  RAM starting address and size turns off watermarks and then turns on blocking mode for the fifo operation
 
 	//SAMC21 demo sets Tx RAM starting addresses and element count here
-	CAN0_REGS->CAN_TXBC = (CAN_TXBC_TBSA(tx) | CAN_TXBC_NDTB(MSG_LIST_SIZE) | CAN_TXBC_TFQM(MSG_LIST_SIZE*(sizeof(uint32_t))) | CAN_TXBC_TFQM(0)); //set Tx fifo RAM starting address and size of array then size of fifo, then we turn on FIFO operation 
+	CAN0_REGS->CAN_TXBC = (CAN_TXBC_TBSA(tx) | CAN_TXBC_NDTB(MSG_LIST_SIZE) | CAN_TXBC_TFQM(MEM_SIZE) | CAN_TXBC_TFQM(0)); //set Tx fifo RAM starting address and size of array then size of fifo, then we turn on FIFO operation 
 
 	//SAMC21 demo sets Tx Event fifo
-	CAN0_REGS->CAN_TXEFC = (CAN_TXEFC_EFSA(event) | CAN_TXEFC_EFS(MSG_LIST_SIZE) | CAN_TXEFC_EFWM(0)); //Set our tx event fifo addr and size then turn off watermark
+	CAN0_REGS->CAN_TXEFC = (CAN_TXEFC_EFSA(event) | CAN_TXEFC_EFS(MEM_SIZE) | CAN_TXEFC_EFWM(0)); //Set our tx event fifo addr and size then turn off watermark
 
 	//SAMC21 demo sets rx buffer 
 
