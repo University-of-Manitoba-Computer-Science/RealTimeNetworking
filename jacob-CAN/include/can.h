@@ -4,6 +4,7 @@
 #include <stdint.h>
 
 void canInit(void);
-void put_message(uint8_t *data, int len);
+void queue_message(uint8_t *data, int len);
+int  dequeue_message(uint8_t *data, int max_len);
 
 #endif // CAN_H_

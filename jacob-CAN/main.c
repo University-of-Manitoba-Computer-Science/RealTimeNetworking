@@ -29,8 +29,7 @@ void EIC_EXTINT_15_Handler()
 int main(void)
 {
 #ifndef NDEBUG
-    for (int i = 0; i < 100000; i++)
-        ;
+    for (int i = 0; i < 100000; i++);
 #endif
 
     // LED output
@@ -61,9 +60,12 @@ int main(void)
         __WFI();
         if ((msCount % LED_FLASH_MS) == 0) {
             uint8_t data[2] = {0x12, 0x34};
-            put_message(data, 2);
+            queue_message(data, 2);
 
             PORT_REGS->GROUP[0].PORT_OUTTGL = PORT_PA14;
+
+            uint8_t rx_data[16];
+            while ((dequeue_message(rx_data, 16)) != -1);
         }
     }
     return 0;

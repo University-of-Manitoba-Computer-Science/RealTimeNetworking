@@ -140,7 +140,7 @@ void canInit()
     PORT_REGS->GROUP[0].PORT_OUTCLR = PORT_PA20;
 }
 
-void put_message(uint8_t *data, int len)
+void queue_message(uint8_t *data, int len)
 {
     if ((CAN0_REGS->CAN_TXFQS & CAN_TXFQS_TFQF_Msk) == CAN_TXFQS_TFQF_Msk)
         return; // don't send message if the queue is full
@@ -166,17 +166,16 @@ int dequeue_message(uint8_t *data, int max_size)
     int get_index  = (status & CAN_RXF0S_F0GI_Msk) >> CAN_RXF0S_F0GI_Pos;
 
     // exit on empty FIFO
-    if (fill_level == 0) {
+    if (fill_level == 0)
         return -1;
-    }
 
     // acknowledge
     CAN0_REGS->CAN_RXF0A = CAN_RXF0A_F0AI(get_index);
 
     int offset = RX_FIFO0_OFFSET + (get_index * RX_FIFO0_ELEMENT_SIZE);
 
-    int line0 = msg_ram[offset++];
-    int line1 = msg_ram[offset++];
+    uint32_t line0 = msg_ram[offset++];
+    uint32_t line1 = msg_ram[offset++];
 
     dbg_write_u32(&line0, 1);
     dbg_write_u32(&line1, 1);
