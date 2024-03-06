@@ -85,3 +85,27 @@ PORT_REGS->GROUP[0].PORT_PMUX[11] |= PORT_PMUX_PMUXO_I;
 
 
 }//initCAN
+
+//rx and filter
+void setFifoFilter(int fifo, uint8_t filter, uint32_t id, uint32_t mask){
+
+	if(fifo == 0 || fifo == 1){
+		
+	}
+
+}
+bool getCanRxBuffData(uint8_t index){
+
+
+}
+
+//tx 3
+void sendCanTXbuffer(uint8_t index){
+	
+
+}
+void enqueueCanTxMsg(uint32_t id, uint8_t length, const uint8_t *data){
+
+
+}
+
