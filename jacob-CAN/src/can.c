@@ -63,6 +63,10 @@ void canInit()
     PORT_REGS->GROUP[0].PORT_PINCFG[23] |= PORT_PINCFG_PMUXEN_Msk;
     PORT_REGS->GROUP[0].PORT_PMUX[11]   |= PORT_PMUX_PMUXO_I;
 
+    // setup mode port
+    PORT_REGS->GROUP[0].PORT_DIRSET = PORT_PA20;
+    PORT_REGS->GROUP[0].PORT_OUTSET = PORT_PA20;
+
     // set generator 3 to use DFLL48M as a source; with a divider of 3 that
     // gives us 16 MHz
     // TODO experimentally found that a division factor of 3 gives 1 MHz CAN
@@ -70,15 +74,13 @@ void canInit()
     GCLK_REGS->GCLK_GENCTRL[3] =
         GCLK_GENCTRL_DIV(3) | GCLK_GENCTRL_SRC_DFLL | GCLK_GENCTRL_GENEN_Msk;
     while ((GCLK_REGS->GCLK_SYNCBUSY & GCLK_SYNCBUSY_GENCTRL_GCLK3) ==
-           GCLK_SYNCBUSY_GENCTRL_GCLK3)
-        ; /* Wait for synchronization */
+           GCLK_SYNCBUSY_GENCTRL_GCLK3); /* Wait for synchronization */
 
     // setup clock
     GCLK_REGS->GCLK_PCHCTRL[27] =
         GCLK_PCHCTRL_GEN_GCLK3 | GCLK_PCHCTRL_CHEN_Msk;
     while ((GCLK_REGS->GCLK_PCHCTRL[27] & GCLK_PCHCTRL_CHEN_Msk) !=
-           GCLK_PCHCTRL_CHEN_Msk)
-        ;
+           GCLK_PCHCTRL_CHEN_Msk);
     MCLK_REGS->MCLK_AHBMASK |= MCLK_AHBMASK_CAN0_Msk;
 
     // Configuration
@@ -88,12 +90,11 @@ void canInit()
     // TODO remove once CAN driver is working over loopback
     // TODO this prevents the endless stream of TX
     CAN0_REGS->CAN_CCCR |= CAN_CCCR_TEST_Msk; // Enable test mode
-    // CAN0_REGS->CAN_TEST  = CAN_TEST_LBCK_Msk; // Enable loopback mode
+    CAN0_REGS->CAN_TEST  = CAN_TEST_LBCK_Msk; // Enable loopback mode
 
-    // Reject non-matching frames
-    // TODO I don't know if we need this, but testing some filtering seems like
-    // a good idea
-    CAN0_REGS->CAN_GFC |= CAN_GFC_ANFS(2) | CAN_GFC_ANFE(2);
+    // Accept non-matching standard frames in FIFO0
+    // Reject non-matching extended frames
+    CAN0_REGS->CAN_GFC |= CAN_GFC_ANFS(0) | CAN_GFC_ANFE(2);
 
     // Setting up message RAM
     uint32_t *addr = msg_ram;
@@ -133,9 +134,10 @@ void canInit()
     for (int i = 0; i < TX_BUFFER_SIZE; ++i) CAN0_REGS->CAN_TXBTIE |= (1 << i);
 
     // unset CCCR.INIT once synchronized
-    while ((CAN0_REGS->CAN_CCCR & CAN_CCCR_INIT_Msk) != CAN_CCCR_INIT_Msk)
-        ;
+    while ((CAN0_REGS->CAN_CCCR & CAN_CCCR_INIT_Msk) != CAN_CCCR_INIT_Msk);
     CAN0_REGS->CAN_CCCR &= ~CAN_CCCR_INIT_Msk;
+
+    PORT_REGS->GROUP[0].PORT_OUTCLR = PORT_PA20;
 }
 
 void put_message(uint8_t *data, int len)
@@ -154,4 +156,33 @@ void put_message(uint8_t *data, int len)
     memcpy(&msg_ram[offset], &index, 1);
 
     CAN0_REGS->CAN_TXBAR |= 1 << index;
+}
+
+int dequeue_message(uint8_t *data, int max_size)
+{
+    int status = CAN0_REGS->CAN_RXF0S;
+
+    int fill_level = (status & CAN_RXF0S_F0FL_Msk) >> CAN_RXF0S_F0FL_Pos;
+    int get_index  = (status & CAN_RXF0S_F0GI_Msk) >> CAN_RXF0S_F0GI_Pos;
+
+    // exit on empty FIFO
+    if (fill_level == 0) {
+        return -1;
+    }
+
+    // acknowledge
+    CAN0_REGS->CAN_RXF0A = CAN_RXF0A_F0AI(get_index);
+
+    int offset = RX_FIFO0_OFFSET + (get_index * RX_FIFO0_ELEMENT_SIZE);
+
+    int line0 = msg_ram[offset++];
+    int line1 = msg_ram[offset++];
+
+    dbg_write_u32(&line0, 1);
+    dbg_write_u32(&line1, 1);
+
+    // TODO get message length
+    // TODO copy payload into data
+
+    return 0;
 }
