@@ -1,5 +1,7 @@
 #include "can.h"
 
+#define DEVICE_CAN_ID 0x123
+
 #include <sam.h>
 #include <string.h>
 
@@ -147,12 +149,12 @@ void queue_message(uint8_t *data, int len)
 
     uint32_t status = CAN0_REGS->CAN_TXFQS & CAN_TXFQS_TFQPI_Msk;
     uint8_t  index  = status >> CAN_TXFQS_TFQPI_Pos;
-    dbg_write_u8(&index, 1);
-    dbg_write_char('\n');
 
     int offset        = TX_BUFFER_OFFSET + (index * TX_BUFFER_ELEMENT_SIZE);
-    msg_ram[offset++] = STD_BUF_ID(0x123);
-    msg_ram[offset++] = MM_BUF(0) | DLC_BUF((uint32_t) 1);
+    msg_ram[offset++] = STD_BUF_ID(DEVICE_CAN_ID);
+    msg_ram[offset++] =
+        MM_BUF(0) |
+        DLC_BUF((uint32_t) 1); // TODO start sending the passed data again
     memcpy(&msg_ram[offset], &index, 1);
 
     CAN0_REGS->CAN_TXBAR |= 1 << index;
@@ -177,8 +179,10 @@ int dequeue_message(uint8_t *data, int max_size)
     uint32_t line0 = msg_ram[offset++];
     uint32_t line1 = msg_ram[offset++];
 
-    dbg_write_u32(&line0, 1);
+    dbg_write_str("Received: ") dbg_write_u32(&line0, 1);
+    dbg_write_char(' ');
     dbg_write_u32(&line1, 1);
+    dbg_write_char('\n');
 
     // TODO get message length
     // TODO copy payload into data
