@@ -94,7 +94,41 @@ void setFifoFilter(int fifo, uint8_t filter, uint32_t id, uint32_t mask){
 	}
 
 }
-bool getCanRxBuffData(uint8_t index){
+//checks if RX buffer has a item at the specified index
+void getCanRxBuffData(uint8_t index, CAN_MSG *msg, uint32_t *ramAddr){
+	uint32_t *rxBuf = 0; 
+	uint32_t rxWord;
+	uint8_t length;
+
+	//If we are out of range set the msg to empty
+	if(index >= MSG_LIST_SIZE){
+		msg->id = 0; 
+		msg->time = 0; 
+		msg->len = 0;
+		msg->dataLen = 0;
+	}
+	else {
+		//TODO: Finish getting message from ram
+		rxBuf = ramAddr + (index * (RX_HEADER_SZ + MEM_SIZE/4));
+		rxWord = *rxBuf++; // we sshould now have the word of the rxBuffData
+		// dont want the extended
+		msg->id = (rxWord & CAN_RXF0E_0_ID_Msk); //mask our word with the ID Msk -> probably wrong
+		msg->len = 0;
+		msg->time = rxWord; //wrong
+		
+	}
+}
+
+bool hasRxBuffData(uint8_t index){
+	bool out = (CAN0_REGS->CAN_NDAT1 &(1 << index)) ? true : false;
+	if (index > 32 && index < 64){
+		out = (CAN0_REGS->CAN_NDAT2 &(1 << index -32)) ? true : false; 
+	}
+	else if(index < 0 || index > 64){
+
+		out = false; 
+	}
+	return out;
 
 
 }

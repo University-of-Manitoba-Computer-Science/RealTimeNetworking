@@ -10,8 +10,9 @@
 #define QUANTA_AFTER 7UL
 #define QUANTA_SYNC 2UL
 
-#define MSG_LIST_SIZE 25
-#define MEM_SIZE MSG_LIST_SIZE*sizeof(uint32_t)
+#define MSG_LIST_SIZE 25UL 
+#define MEM_SIZE (MSG_LIST_SIZE*sizeof(uint32_t))
+#define RX_HEADER_SZ (2u)
 
 //The message struct from the sample code seems like a great idea
 //So I am making my own heavily inspired by it
@@ -21,7 +22,7 @@ typedef struct can_msg{
     uint32_t time;
     uint8_t *data;
     uint8_t len;
-    uint8_t data_len;
+    uint8_t dataLen;
 
 } CAN_MSG;
 
@@ -32,7 +33,8 @@ void CAN0Init();
 
 //rx and filter
 void setFifoFilter(int fifo, uint8_t filter, uint32_t id, uint32_t mask);
-bool getCanRxBuffData(uint8_t index);
+void getCanRxBuffData(uint8_t index, CAN_MSG *msg, uint32_t *ramAddr);
+bool hasRxBuffData(uint8_t index);
 
 //tx 3
 void sendCanTXbuffer(uint8_t index);
