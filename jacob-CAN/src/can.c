@@ -53,6 +53,34 @@
 
 static uint32_t msg_ram[MSG_RAM_SIZE];
 
+static int decode_dlc(int dlc)
+{
+    switch (dlc) {
+    case 9 : return 12;
+    case 10 : return 16;
+    case 11 : return 20;
+    case 12 : return 24;
+    case 13 : return 32;
+    case 14 : return 48;
+    case 15 : return 64;
+    default : return dlc >= 0 && dlc <= 8 ? dlc : 0;
+    }
+}
+
+static int encode_dlc(int len)
+{
+    switch (len) {
+    case 12 : return 9;
+    case 16 : return 10;
+    case 20 : return 11;
+    case 24 : return 12;
+    case 32 : return 13;
+    case 48 : return 14;
+    case 64 : return 15;
+    default : return len >= 0 && len <= 8 ? len : 0;
+    }
+}
+
 void canInit()
 {
     // setup TX port
@@ -151,11 +179,10 @@ void queue_message(uint8_t *data, int len)
     uint8_t  index  = status >> CAN_TXFQS_TFQPI_Pos;
 
     int offset        = TX_BUFFER_OFFSET + (index * TX_BUFFER_ELEMENT_SIZE);
+    int dlc           = encode_dlc(len);
     msg_ram[offset++] = STD_BUF_ID(DEVICE_CAN_ID);
-    msg_ram[offset++] =
-        MM_BUF(0) |
-        DLC_BUF((uint32_t) 1); // TODO start sending the passed data again
-    memcpy(&msg_ram[offset], &index, 1);
+    msg_ram[offset++] = MM_BUF(0) | DLC_BUF((uint32_t) dlc);
+    memcpy(&msg_ram[offset], &index, dlc);
 
     CAN0_REGS->CAN_TXBAR |= 1 << index;
 }
@@ -179,13 +206,17 @@ int dequeue_message(uint8_t *data, int max_size)
     uint32_t line0 = msg_ram[offset++];
     uint32_t line1 = msg_ram[offset++];
 
-    dbg_write_str("Received: ") dbg_write_u32(&line0, 1);
+    int len = decode_dlc((line1 & DLC_BUF_Msk) >> DLC_BUF_Pos);
+    len     = max_size > len ? max_size : len;
+    memcpy(data, &msg_ram[offset], len);
+
+    dbg_write_str("Received: ");
+    dbg_write_u32(&line0, 1);
     dbg_write_char(' ');
     dbg_write_u32(&line1, 1);
+    dbg_write_char(' ');
+    dbg_write_u8(data, len);
     dbg_write_char('\n');
-
-    // TODO get message length
-    // TODO copy payload into data
 
     return 0;
 }

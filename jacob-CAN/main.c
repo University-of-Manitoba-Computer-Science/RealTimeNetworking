@@ -55,12 +55,14 @@ int main(void)
     // we want interrupts!
     __enable_irq();
 
+    uint8_t test = 0; // TODO remove this once we have actual data to send
+
     // sleep until we have an interrupt
     while (1) {
         __WFI();
         if ((msCount % LED_FLASH_MS) == 0) {
-            uint8_t data[2] = {0x12, 0x34};
-            queue_message(data, 2);
+            uint8_t data[1] = {test};
+            queue_message(data, 1);
 
             PORT_REGS->GROUP[0].PORT_OUTTGL = PORT_PA14;
 
