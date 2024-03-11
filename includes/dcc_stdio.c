@@ -143,3 +143,35 @@ void dbg_write_char(char msg)
 {
 	dbg_write(TARGET_REQ_DEBUGCHAR | ((msg & 0xff) << 16));
 }
+
+#define NANOPRINTF_USE_FIELD_WIDTH_FORMAT_SPECIFIERS 1
+#define NANOPRINTF_USE_PRECISION_FORMAT_SPECIFIERS 1
+#define NANOPRINTF_USE_LARGE_FORMAT_SPECIFIERS 1
+#define NANOPRINTF_USE_FLOAT_FORMAT_SPECIFIERS 1
+#define NANOPRINTF_USE_BINARY_FORMAT_SPECIFIERS 1
+#define NANOPRINTF_USE_WRITEBACK_FORMAT_SPECIFIERS 0
+
+// Compile nanoprintf in this translation unit.
+#define NANOPRINTF_IMPLEMENTATION
+#include "nanoprintf.h"
+
+int snprintf(char *buffer, size_t bufsz, char const *fmt, ...)
+{
+	va_list val;
+	va_start(val, fmt);
+	int const rv = npf_vsnprintf(buffer, bufsz, fmt, val);
+	va_end(val);
+	return rv;
+}
+
+// printf implementation using sprintf and dbg_write_str
+int dcc_printf(const char *fmt, ...)
+{
+	char buffer[256];
+	va_list val;
+	va_start(val, fmt);
+	int const rv = npf_vsnprintf(buffer, sizeof(buffer), fmt, val);
+	va_end(val);
+	dbg_write_str(buffer);
+	return rv;
+}

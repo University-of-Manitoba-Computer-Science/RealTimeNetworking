@@ -28,7 +28,7 @@ INCLUDE_DIRS := -I$(PACK_PATH)/include -I$(CORE_PATH)/Include -I$(INC_DIR)
 
 # Compiler flags
 CFLAGS := -x c -mthumb -mcpu=$(CPU) -D__$(DEVICE_UPPER)__ -O1 -ffunction-sections -Wall -c -std=gnu99
-LDFLAGS := -Wl,--start-group -lm -Wl,--end-group -Wl,--gc-sections -mthumb -mcpu=$(CPU) -T$(PACK_PATH)/gcc/gcc/$(DEVICE)_flash.ld
+LDFLAGS := -Wl,--start-group -lm -Wl,--end-group -Wl,--gc-sections -mthumb -mcpu=$(CPU) -T$(PACK_PATH)/gcc/gcc/$(DEVICE)_flash.ld -u _printf_float
 
 # Object files
 SYS_OBJS := $(PACK_PATH)/gcc/system_$(DEVICE).o $(PACK_PATH)/gcc/gcc/startup_$(DEVICE).o

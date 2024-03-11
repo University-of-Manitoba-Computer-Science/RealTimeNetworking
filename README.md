@@ -21,3 +21,8 @@ make install
 ```
 
 .elf is located at `./bin/blinky.elf`, and was installed using OpenOCD on the host.
+
+
+## Wifi Click
+
+maximum clock frequency of 48MHz

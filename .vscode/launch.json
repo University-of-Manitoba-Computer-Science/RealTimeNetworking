@@ -8,25 +8,22 @@
       "name": "openOCD",
       "type": "cppdbg",
       "request": "launch",
-      "program": "${workspaceFolder}/test.elf",
+      "program": "${workspaceFolder}/bin/blinky.elf",
       "cwd": "${workspaceFolder}",
       "MIMode": "gdb",
       "targetArchitecture": "arm",
       "launchCompleteCommand": "None",
-      "hardwareBreakpoints": { "require": true },
-      "miDebuggerPath": "arm-none-eabi-gdb",
+      "hardwareBreakpoints": {"require": true},
+      "miDebuggerPath": "/opt/homebrew/bin/arm-none-eabi-gdb",
       "setupCommands": [
-        { "text": "file ${workspaceFolder}/test.elf", "ignoreFailures": false },
-        {
-          "text": "target extended-remote localhost:3333",
-          "ignoreFailures": false
-        },
-        { "text": "monitor reset halt", "ignoreFailures": false }
-      ],
-      "debugServerPath": "openocd",
-      "debugServerArgs": "-f board/microchip_same51_curiosity_nano.cfg",
-      "filterStderr": true,
-      "postDebugTask": "reset board"
-    }
+        {"text": "echo ${workspaceFolder}", "ignoreFailures": false},
+        {"text": "file ${workspaceFolder}/bin/blinky.elf", "ignoreFailures": false},
+        {"text": "target extended-remote localhost:3331", "ignoreFailures": false},
+        {"text": "openocd -f board/microchip_same51_curiosity_nano.cfg -c 'gdb_port 3331'", "ignoreFailures": false},
+        {"text": "monitor target_request debugmsgs enable", "ignoreFailures": false},
+        {"text": "monitor trace point 1", "ignoreFailures": false},
+        {"text": "monitor reset halt", "ignoreFailures": false}
+      ]
+    } 
   ]
 }

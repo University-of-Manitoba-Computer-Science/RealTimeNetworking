@@ -5,8 +5,7 @@
       "name": "all"
     },
     {
-      "name": "install",
-      "makeArgs": ["test-install"]
+      "name": "install"
     },
     {
       "name": "clean",
@@ -18,6 +17,7 @@
     "*.mdx": "markdown",
     "sam.h": "c",
     "assert.h": "c",
-    "dcc_stdio.h": "c"
+    "dcc_stdio.h": "c",
+    "*.h": "c"
   }
 }

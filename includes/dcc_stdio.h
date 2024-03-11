@@ -19,4 +19,7 @@ void dbg_write_u8(const unsigned char *val, long len);
 void dbg_write_str(const char *msg);
 void dbg_write_char(char msg);
 
-#endif	/* DCC_STDIO_H */
+#define printf dcc_printf
+int dcc_printf(const char *fmt, ...);
+
+#endif /* DCC_STDIO_H */

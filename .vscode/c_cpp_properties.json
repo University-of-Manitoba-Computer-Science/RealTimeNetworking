@@ -9,7 +9,9 @@
         "${workspaceFolder}/../E51-pack/include",
         "${workspaceFolder}/../E51-pack/include/**"
       ],
+      "compilerPath": "/opt/homebrew/bin/arm-none-eabi-gcc",
       "configurationProvider": "ms-vscode.makefile-tools",
+      "cStandard": "c99",
       "defines": ["__SAME51J20A__"]
     }
   ],

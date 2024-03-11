@@ -30,10 +30,22 @@ Added docker build method to solve dependency issues with python version and ncu
 
 Added comments for x86_64 arch, added OpenOCD, waiting to test usb passthrough
 
-# Fri Feb  2 14:45:58 CST 2024
+# Fri Feb 2 14:45:58 CST 2024
 
 Happy with my docker build system, reached out to Professor Zapp to get urls for CMSIS pack/core so they can be pulled automatically in dockerfile which is now working, also allowed dockerfile to recieve args to determine system arch instead of relying on commented urls
 
-# Fri Feb  2 14:53:17 CST 2024
+# Fri Feb 2 14:53:17 CST 2024
 
 Slightly changed Makefile because dynamic install is not important for this situation
+
+# Sat Feb 3 12:23:45 CST 2024
+
+Added CMSIS pack and core to dockerfile, also added a script to pull the pack and core from the url and extract it to the correct location
+
+# Mon Feb 5 10:11:14 CST 2024
+
+Worked more on intializing CAN, cleaned up some other code to make expanding slighly easier
+
+# Fri Feb 9 18:34:59 CST 2024
+
+Finally finished build system (makefile and docker) and configured the rest of my vscode to work with the new build system
