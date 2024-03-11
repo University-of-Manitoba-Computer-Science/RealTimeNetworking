@@ -1,7 +1,5 @@
 #include "can.h"
 
-//HEAVY influence from the following repo
-//https://github.com/majbthrd/SAMC21demoCAN
 
 
 // We will use PA22 AND PA23 as are CAN TX and CAN RX respectively
@@ -135,10 +133,29 @@ bool hasRxBuffData(uint8_t index){
 
 //tx 3
 void sendCanTXbuffer(uint8_t index){
+
+	if(index >= 0 && index < MSG_LIST_SIZE){
+
+		//we select which buffer we are writing by wiriting a 1 to that position in the TX Buffer Add Request Register
+		CAN0_REGS->CAN_TXBAR = (1 << index);
+
+	}//if
 	
 
 }
+
+
 void enqueueCanTxMsg(uint32_t id, uint8_t length, const uint8_t *data){
+	
+	
+
+
+
+}
+
+void dequeueCanTxMsg(){
+
+	sendCanTXbuffer(currTxIndex)
 
 
 }

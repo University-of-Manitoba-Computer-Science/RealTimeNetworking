@@ -26,6 +26,19 @@ typedef struct can_msg{
 
 } CAN_MSG;
 
+//Here we initalize arrays to use for our buffers and we will give these addresses to the 
+//CAN controller registers to use DMA
+static uint32_t msgRam[MSG_LIST_SIZE] = {1};
+static uint32_t *msgAddr = msgRam;
+static uint32_t txRam[MSG_LIST_SIZE];
+static uint32_t *txAddr = txRam;
+static uint32_t txEvent[MSG_LIST_SIZE];
+static uint32_t *eventAddr = txEvent; 
+static uint32_t rxRam[MSG_LIST_SIZE]; //Should i times 2 so I can initate both rx fifos?
+static uint32_t *rxAddr = rxRam;
+static uint32_t rxBuff[MSG_LIST_SIZE]; //Should i times 2 so I can initate both rx fifos?
+static uint32_t *rxBuffAddr = rxBuff;
+static uint32_t currTxIndex = 0;
 //init can
 void clkCAN();
 void initCAN(uint32_t *ram, uint32_t *tx, uint32_t *rx, uint32_t *event, uint32_t *rxbuff);
@@ -39,7 +52,7 @@ bool hasRxBuffData(uint8_t index);
 //tx 3
 void sendCanTXbuffer(uint8_t index);
 void enqueueCanTxMsg(uint32_t id, uint8_t length, const uint8_t *data);
-
+void dequeueCanTxMsg();
 
 
 #endif // CAN

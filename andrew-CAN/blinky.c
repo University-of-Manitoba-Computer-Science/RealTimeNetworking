@@ -19,17 +19,7 @@ void heartInit();
 // NOTE: this overflows every ~50 days, so I'm not going to care here...
 volatile uint32_t msCount = 0;
 
-//This is our CAN memory initialization
-static uint32_t msgRam[MSG_LIST_SIZE] = {1};
-static uint32_t *msgAddr = msgRam;
-static uint32_t txRam[MSG_LIST_SIZE];
-static uint32_t *txAddr = txRam;
-static uint32_t txEvent[MSG_LIST_SIZE];
-static uint32_t *eventAddr = txEvent; 
-static uint32_t rxRam[MSG_LIST_SIZE]; //Should i times 2 so I can initate both rx fifos?
-static uint32_t *rxAddr = rxRam;
-static uint32_t rxBuff[MSG_LIST_SIZE]; //Should i times 2 so I can initate both rx fifos?
-static uint32_t *rxBuffAddr = rxBuff;
+
 
 void initAllPorts(){
 
