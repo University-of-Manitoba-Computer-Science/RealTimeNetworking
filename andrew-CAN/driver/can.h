@@ -1,5 +1,6 @@
 #include "sam.h"
 #include <stdbool.h>
+#include <string.h>
 //HEAVY influence from the following repo
 //https://github.com/majbthrd/SAMC21demoCAN
 
@@ -11,8 +12,8 @@
 #define QUANTA_SYNC 2UL
 
 #define MSG_LIST_SIZE 25UL 
-#define MEM_SIZE (MSG_LIST_SIZE*sizeof(uint32_t))
-#define RX_HEADER_SZ (2u)
+#define MEM_SIZE (4U) //(4 bytes = 32 bits) ie 1 word
+#define RX_HEADER_SZ (2u) //2words
 
 //The message struct from the sample code seems like a great idea
 //So I am making my own heavily inspired by it

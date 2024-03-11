@@ -16,6 +16,7 @@
   "C_Cpp.errorSquiggles": "enabled",
   "files.associations": {
     "sam.h": "c",
-    "gyro.h": "c"
+    "gyro.h": "c",
+    "stdbool.h": "c"
   }
 }

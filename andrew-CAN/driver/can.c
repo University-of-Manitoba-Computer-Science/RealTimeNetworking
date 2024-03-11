@@ -92,7 +92,8 @@ void setFifoFilter(int fifo, uint8_t filter, uint32_t id, uint32_t mask){
 	}
 
 }
-//checks if RX buffer has a item at the specified index
+
+
 void getCanRxBuffData(uint8_t index, CAN_MSG *msg, uint32_t *ramAddr){
 	uint32_t *rxBuf = 0; 
 	uint32_t rxWord;
@@ -107,12 +108,13 @@ void getCanRxBuffData(uint8_t index, CAN_MSG *msg, uint32_t *ramAddr){
 	}
 	else {
 		//TODO: Finish getting message from ram
-		rxBuf = ramAddr + (index * (RX_HEADER_SZ + MEM_SIZE/4));
+		rxBuf = ramAddr + (index * (RX_HEADER_SZ+2U /4U));
 		rxWord = *rxBuf++; // we sshould now have the word of the rxBuffData
 		// dont want the extended
-		msg->id = (rxWord & CAN_RXF0E_0_ID_Msk); //mask our word with the ID Msk -> probably wrong
-		msg->len = 0;
-		msg->time = rxWord; //wrong
+		msg->id = (rxWord & CAN_RXF0E_0_ID_Msk) >> 18; //mask our word with the ID Msk and move it back to the correct position
+		msg->len = (rxWord & (0xfu << 16)) >> 16;
+		msg->time = rxWord & 0xffffu; //wrong
+		memcpy(msg->data, rxBuf, msg->dataLen);
 		
 	}
 }
@@ -147,6 +149,21 @@ void sendCanTXbuffer(uint8_t index){
 
 void enqueueCanTxMsg(uint32_t id, uint8_t length, const uint8_t *data){
 	
+	uint32_t val;
+	uint32_t *txBuf = 0;
+	uint8_t idx = (uint8_t)(CAN0_REGS->CAN_TXFQS & CAN_TXFQS_TFQF_Msk)>>CAN_TXFQS_TFQF_Pos; //Get the id 
+
+	txBuf = txRam + (uint32_t)(idx * (RX_HEADER_SZ+MEM_SIZE / 4));
+	*txBuf++ = (0X1U <<30) | ((0X1FFFFFFFU) & id);
+	val = (((0XFFU << 24) & ((0) <<24))) | (((0XFU <<16) & (((uint32_t)length) <<16)));
+	*txBuf++ = val;
+	memcpy(txBuf, data, length);
+
+	//set interrupt
+	CAN0_REGS->CAN_TXBTIE |= (1 <<length);
+
+	//set the correct add request buffer
+	CAN0_REGS->CAN_TXBAR |= (1 <<length);
 	
 
 
@@ -155,8 +172,8 @@ void enqueueCanTxMsg(uint32_t id, uint8_t length, const uint8_t *data){
 
 void dequeueCanTxMsg(){
 
-	sendCanTXbuffer(currTxIndex)
-
+	sendCanTXbuffer(currTxIndex);
+	currTxIndex = (currTxIndex+1)%MSG_LIST_SIZE;
 
 }
 
