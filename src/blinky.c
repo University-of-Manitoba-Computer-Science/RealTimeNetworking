@@ -1,8 +1,8 @@
 #include "sam.h"
 #include "dcc_stdio.h"
-#include "time.h"
+#include "heartbeat.h"
 #include "spi.h"
-#include "wifi.h"
+#include "wifi8.h"
 #include <string.h>
 #include <assert.h>
 
@@ -34,11 +34,6 @@ void buttonInit()
 // button press handler
 void EIC_EXTINT_15_Handler()
 {
-  uint32_t wifi_id = 0;
-  wifi8_reg_read(0x1000, &wifi_id);
-
-  printf("wifi id: %x\n", wifi_id);
-
   EIC_REGS->EIC_INTFLAG |= EXTINT15_MASK;
 }
 
@@ -59,12 +54,45 @@ int main(void)
 
   heartInit();
   buttonInit();
-  init_spi();
-
-  uint8_t result = init_wifi();
 
   // we want interrupts!
   __enable_irq();
+
+  // initialize the SPI
+  init_spi();
+
+  // wait for wifi
+  delay_ms(1000);
+
+  // initialize the wifi
+  wifi8_t ctx;
+  err_t result = wifi8_init(&ctx);
+
+  // wait for the on-board debugger USB UART to be ready
+  delay_ms(1000);
+
+  // print status
+  printf("wifi8_init: %d\n", result);
+
+  wifi8_m2m_rev_t fw_version;
+  if (WIFI8_OK == wifi8_get_full_firmware_version(&ctx, &fw_version))
+  {
+    printf("Firmware HIF (%u) : %u.%u \n",
+           ((uint16_t)(((fw_version.u16_firmware_hif_info) >> (14)) & (0x3))),
+           ((uint16_t)(((fw_version.u16_firmware_hif_info) >> (8)) & (0x3f))),
+           ((uint16_t)(((fw_version.u16_firmware_hif_info) >> (0)) & (0xff))));
+    printf("Firmware ver   : %u.%u.%u \n",
+           (uint16_t)fw_version.u8_firmware_major,
+           (uint16_t)fw_version.u8_firmware_minor,
+           (uint16_t)fw_version.u8_firmware_patch);
+    printf("Firmware Build %s Time %s\n", fw_version.build_date, fw_version.build_time);
+  }
+  else
+  {
+    printf("error reading full firmware version\n");
+    for (;;)
+      ;
+  }
 
   // sleep until we have an interrupt
   while (1)
@@ -73,7 +101,6 @@ int main(void)
 
     if (testLedTimer())
     {
-      printf("initialization result: %d\n", result);
       PORT_REGS->GROUP[0].PORT_OUTTGL = PORT_PA14;
     }
   }

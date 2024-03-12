@@ -1353,17 +1353,4 @@ typedef struct
     uint8_t __pad16__[2];                      /*!< padding bytes for forcing 4-byte alignment */
 } wifi8_init_param_t;
 
-#define err_t uint8_t
-
-err_t wifi8_reg_read(uint32_t addr, uint32_t *data_out);
-err_t wifi8_reg_write(uint32_t addr, uint32_t data_in);
-err_t spi_cmd(uint8_t cmd, uint32_t adr, uint32_t data_in, uint32_t sz, uint8_t clockless);
-err_t spi_cmd_rsp(uint8_t cmd);
-err_t spi_data_read(uint8_t *b, uint16_t sz, uint8_t clockless);
-err_t init_wifi();
-err_t wifi8_init_drv();
-err_t wifi8_hold();
-err_t wifi8_start();
-err_t wifi8_init_communication();
-
 #endif

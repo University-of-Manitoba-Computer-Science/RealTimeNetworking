@@ -1,6 +1,6 @@
 #include "sam.h"
 #include "spi.h"
-#include "time.h"
+#include "heartbeat.h"
 
 // overflow @ 1ms w/ 120MHz clock
 #define MS_TICKS 120000UL
