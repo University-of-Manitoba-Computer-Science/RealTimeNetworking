@@ -49,3 +49,15 @@ Worked more on intializing CAN, cleaned up some other code to make expanding sli
 # Fri Feb 9 18:34:59 CST 2024
 
 Finally finished build system (makefile and docker) and configured the rest of my vscode to work with the new build system
+
+# Wed Feb 28 17:00:00 CST 2024
+
+Had issues with CAN bus click and spent a week debugging it. Got stomach flu and took week off. Contacted Professor Zapp and we decided to shift to focus on wi-fi click and get it working because power issues were interfering with CAN board progress (was not able to flash the board anymore)
+
+# Mon Mar 4 13:54:21 CST 2024
+
+Spent a couple days working on the wifi8 click, tried finding documentation but most is either for the ATWINC3400-MR210CA module itself or the Mikroe SDK. Ended up learning from the SDK code
+
+# Fri Mar 10 10:45:39 CST 2024
+
+Got some of the wifi click working, am having some other SPI issues now though. Was informed by group that we are allowed to use the SDK itself since it's almost 5k lines of code and has VERY little documentation, so I began modifying the SDK to get it to work with our project (remove the rest of the SDK and kept the wifi click code). I am working on getting proper and reliable SPI communication with the wifi click, my success criteria is to be able to pull the firmware versions from the chip and then I can start using the lib to create the network and broadcast the data. I had to change all of the SPI code, and remove some references to other parts of the SDK.
