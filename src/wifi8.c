@@ -31,6 +31,7 @@
 #include "string.h"
 #include "pins.h"
 #include "spi.h"
+#include "dcc_stdio.h"
 
 /**
  * @brief Dummy data.
@@ -863,6 +864,11 @@ err_t wifi8_generic_write(wifi8_t *ctx, uint8_t *data_in, uint8_t len)
     // TODO: Implement SPI write function
 
     spi_select_device(SPI0_CS_Msk);
+    // delay 10us
+    for (uint32_t i = 0; i < 1000; i++)
+    {
+        asm("nop");
+    }
     err_t error_flag = spi_write(data_in, len);
     spi_deselect_device(SPI0_CS_Msk);
 
@@ -879,6 +885,10 @@ err_t wifi8_generic_read(wifi8_t *ctx, uint8_t *data_out, uint8_t len)
     // TODO: Implement SPI read function
 
     spi_select_device(SPI0_CS_Msk);
+    for (uint32_t i = 0; i < 1000; i++)
+    {
+        asm("nop");
+    }
     err_t error_flag = spi_read(data_out, len);
     spi_deselect_device(SPI0_CS_Msk);
 
@@ -2423,6 +2433,7 @@ static err_t chip_wake(wifi8_t *ctx)
 
     if (WIFI8_OK != wifi8_reg_read(ctx, HOST_CORT_COMM, &reg))
     {
+        printf("wifi8_reg_read failed\n");
         return WIFI8_ERROR;
     }
     if (!(reg & NBIT0))

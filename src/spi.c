@@ -21,17 +21,22 @@ void init_spi()
     while ((GCLK_REGS->GCLK_PCHCTRL[8] & GCLK_PCHCTRL_CHEN_Msk) == 0)
         ;
 
+    // configure the SPI peripheral to use 8-bit data and enable the receiver
     SERCOM1_REGS->SPIM.SERCOM_CTRLB = SERCOM_SPIM_CTRLB_CHSIZE_8_BIT | SERCOM_SPIM_CTRLB_RXEN_Msk;
     while ((SERCOM1_REGS->SPIM.SERCOM_SYNCBUSY) != 0U)
         ;
 
-    SERCOM1_REGS->SPIM.SERCOM_BAUD = (uint8_t)SERCOM_SPIM_BAUD_BAUD(4UL);
+    // fref = 120MHz, fbaud = 30MHz, BAUD = fref / (2 * fbaud) - 1
+    // set BAUD to 1 to get 30MHz baud rate, or
+    SERCOM1_REGS->SPIM.SERCOM_BAUD = (uint8_t)SERCOM_SPIM_BAUD_BAUD(1UL);
+
+    // configure the SPI peripheral to be a master, use default pads, use spi mode 0, data order msb, and enable the peripheral
     SERCOM1_REGS->SPIM.SERCOM_CTRLA = SERCOM_SPIM_CTRLA_MODE_SPI_MASTER | SERCOM_SPIM_CTRLA_DOPO_PAD0 | SERCOM_SPIM_CTRLA_DIPO_PAD3 | SERCOM_SPIM_CTRLA_CPOL_IDLE_LOW | SERCOM_SPIM_CTRLA_CPHA_LEADING_EDGE | SERCOM_SPIM_CTRLA_DORD_MSB | SERCOM_SPIM_CTRLA_ENABLE_Msk;
     while ((SERCOM1_REGS->SPIM.SERCOM_SYNCBUSY) != 0U)
         ;
 }
 
-uint8_t spi_write(uint8_t *data, uint32_t len)
+uint8_t spi_write(uint8_t *data, uint8_t len)
 {
     // iterate over the data bytes and write them to the SPI data register
     for (uint8_t i = 0; i < len; i++)
@@ -41,7 +46,7 @@ uint8_t spi_write(uint8_t *data, uint32_t len)
             ;
 
         // write the data to the SPI data register
-        SERCOM1_REGS->SPIM.SERCOM_DATA = data[i];
+        SERCOM1_REGS->SPIM.SERCOM_DATA = (uint8_t)data[i];
 
         // wait for the transfer to complete
         while ((SERCOM1_REGS->SPIM.SERCOM_INTFLAG & SERCOM_SPIM_INTFLAG_TXC_Msk) == 0U)
@@ -50,7 +55,7 @@ uint8_t spi_write(uint8_t *data, uint32_t len)
     return 0;
 }
 
-uint8_t spi_read(uint8_t *data, uint32_t len)
+uint8_t spi_read(uint8_t *data, uint8_t len)
 {
     // iterate through each byte
     for (uint8_t i = 0; i < len; i++)
@@ -71,16 +76,18 @@ uint8_t spi_read(uint8_t *data, uint32_t len)
             ;
 
         // read the data from the SPI data register
-        data[i] = SERCOM1_REGS->SPIM.SERCOM_DATA;
+        data[i] = (uint8_t)SERCOM1_REGS->SPIM.SERCOM_DATA;
     }
     return 0;
 }
 
+// select the device by setting the CS pin low
 void spi_select_device(uint32_t pin)
 {
     PORT_REGS->GROUP[0].PORT_OUTCLR = pin;
 }
 
+// deselect the device by setting the CS pin high
 void spi_deselect_device(uint32_t pin)
 {
     PORT_REGS->GROUP[0].PORT_OUTSET = pin;
