@@ -1,5 +1,9 @@
 #include "can.h"
 
+//Hey you need to use rx/TX FIFO 0/1 status registers to get the 
+//index of the fifo. 
+//Specifically RXF0S FOPI FOGI bits
+//			   TXFQS TFQPI TFGI TFFL  bits
 
 
 // We will use PA22 AND PA23 as are CAN TX and CAN RX respectively
