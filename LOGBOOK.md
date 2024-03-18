@@ -61,3 +61,7 @@ Spent a couple days working on the wifi8 click, tried finding documentation but 
 # Fri Mar 10 10:45:39 CST 2024
 
 Got some of the wifi click working, am having some other SPI issues now though. Was informed by group that we are allowed to use the SDK itself since it's almost 5k lines of code and has VERY little documentation, so I began modifying the SDK to get it to work with our project (remove the rest of the SDK and kept the wifi click code). I am working on getting proper and reliable SPI communication with the wifi click, my success criteria is to be able to pull the firmware versions from the chip and then I can start using the lib to create the network and broadcast the data. I had to change all of the SPI code, and remove some references to other parts of the SDK.
+
+# Sun Mar 17 21:37:09 CDT 2024
+
+Made large progress. SPI communication from SAME51 board to wifi8 click looks good, I captured communication with the logic analyzer. I am still not getting a reply from the click board, and I suspect it is power related. I found similar issues on forums online with the ATWIN chip. My next step is to power the board externally and test for any problems.

@@ -62,18 +62,24 @@ int main(void)
   init_spi();
 
   // wait for wifi
-  delay_ms(1000);
+  delay_ms(2000);
 
   // initialize the wifi
   wifi8_t ctx;
   err_t result = wifi8_init(&ctx);
-
-  // wait for the on-board debugger USB UART to be ready
-  delay_ms(1000);
-
-  // print status
   printf("wifi8_init: %d\n", result);
 
+  delay_ms(2000);
+
+  // set the default configuration
+  if (WIFI8_OK != wifi8_default_cfg(&ctx))
+  {
+    printf("error setting default config\n");
+    for (;;)
+      ;
+  }
+
+  // get the firmware version
   wifi8_m2m_rev_t fw_version;
   if (WIFI8_OK == wifi8_get_full_firmware_version(&ctx, &fw_version))
   {

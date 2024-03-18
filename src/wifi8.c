@@ -819,12 +819,13 @@ err_t wifi8_init(wifi8_t *ctx)
     // digital_in_init(&ctx->int_pin, cfg->int_pin);
     PORT_REGS->GROUP[0].PORT_DIRSET = SPI0_EN_Msk | SPI0_RST_Msk;
     PORT_REGS->GROUP[0].PORT_DIRCLR = SPI0_INT_Msk;
+    PORT_REGS->GROUP[0].PORT_OUTCLR = SPI0_EN_Msk | SPI0_RST_Msk;
 
     ctx->hif_bl_offset = 0;
     ctx->device_state = NM_STATE_DEINIT;
     ctx->ch_num = 0;
     ctx->hs_flags = WIFI_1X_TLS_HS_FLAGS_DEFAULT;
-    memset(ctx->sockets, 0, MAX_SOCKET);
+    memset(ctx->sockets, 0, MAX_SOCKET * sizeof(wifi8_socket_t));
     memset(ctx->root_sha1, 0, 20);
     ctx->session_id = 0;
     ctx->socket_init = 0;
@@ -837,12 +838,14 @@ err_t wifi8_init(wifi8_t *ctx)
     return 0;
 }
 
+// see https://github.com/MikroElektronika/mikrosdk_click_v2/blob/master/clicks/wifi8/lib_wifi8/src/wifi8.c#L859
+
 err_t wifi8_default_cfg(wifi8_t *ctx)
 {
     // digital_out_high(&ctx->en);
     // digital_out_low(&ctx->rst);
-    PORT_REGS->GROUP[0].PORT_OUTSET = SPI0_EN_Msk;
     PORT_REGS->GROUP[0].PORT_OUTCLR = SPI0_RST_Msk;
+    PORT_REGS->GROUP[0].PORT_OUTSET = SPI0_EN_Msk;
 
     Delay_100ms();
 
@@ -869,7 +872,12 @@ err_t wifi8_generic_write(wifi8_t *ctx, uint8_t *data_in, uint8_t len)
     {
         asm("nop");
     }
-    err_t error_flag = spi_write(data_in, len);
+    // err_t error_flag = spi_write(data_in, len);
+    err_t error_flag = spi_io(data_in, len, NULL, 0);
+    for (uint32_t i = 0; i < 1000; i++)
+    {
+        asm("nop");
+    }
     spi_deselect_device(SPI0_CS_Msk);
 
     return error_flag;
@@ -889,7 +897,12 @@ err_t wifi8_generic_read(wifi8_t *ctx, uint8_t *data_out, uint8_t len)
     {
         asm("nop");
     }
-    err_t error_flag = spi_read(data_out, len);
+    // err_t error_flag = spi_read(data_out, len);
+    err_t error_flag = spi_io(NULL, 0, data_out, len);
+    for (uint32_t i = 0; i < 1000; i++)
+    {
+        asm("nop");
+    }
     spi_deselect_device(SPI0_CS_Msk);
 
     return error_flag;
@@ -1736,6 +1749,7 @@ static err_t wifi8_hold(wifi8_t *ctx)
         (WIFI8_OK != wifi8_reg_read(ctx, 0x13F4, &rf_rev)) ||
         (WIFI8_OK != wifi8_reg_read(ctx, 0x3B0000ul, &ble_id)))
     {
+        printf("Failed to read firmware ID!\r\n");
         return WIFI8_ERROR;
     }
 
