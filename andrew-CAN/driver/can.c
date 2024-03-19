@@ -10,7 +10,7 @@
 #define CAN_CCCR_INIT_MODE_Msk (CAN_CCCR_INIT_Msk & CAN_CCCR_CCE_Msk) // This is so we can set INIT nad CCE at once
 void clkCAN(){
 
-    GCLK_REGS->GCLK_PCHCTRL[CAN0_GCLK_ID] |= GCLK_PCHCTRL_CHEN_Msk;
+    GCLK_REGS->GCLK_PCHCTRL[CAN0_GCLK_ID] = GCLK_PCHCTRL_CHEN_Msk;
 	while((GCLK_REGS->GCLK_PCHCTRL[CAN0_GCLK_ID] & GCLK_PCHCTRL_CHEN_Msk) != GCLK_PCHCTRL_CHEN_Msk){
 		//wait for sync
 	}//while
@@ -48,8 +48,8 @@ void initCAN(uint32_t *ram, uint32_t *tx, uint32_t *rx, uint32_t *event, uint32_
 	//SAMC21 demo sets Rx RAM starting addresses and element count here
 	CAN0_REGS->CAN_RXF0C = (CAN_RXF0C_F0SA(rx) | CAN_RXF0C_F0S(MEM_SIZE) | CAN_RXF0C_F0OM(0) | CAN_RXF0C_F0OM(0)); //sets Rx fifo  RAM starting address and size turns off watermarks and then turns on blocking mode for the fifo operation
 
-	//SAMC21 demo sets Tx RAM starting addresses and element count here
-	CAN0_REGS->CAN_TXBC = (CAN_TXBC_TBSA(tx) | CAN_TXBC_NDTB(MSG_LIST_SIZE) | CAN_TXBC_TFQM(MEM_SIZE) | CAN_TXBC_TFQM(0)); //set Tx fifo RAM starting address and size of array then size of fifo, then we turn on FIFO operation 
+	//SAMC21 demo sets Tx buffer configuration
+	CAN0_REGS->CAN_TXBC = (CAN_TXBC_TBSA(tx) | CAN_TXBC_NDTB(MSG_LIST_SIZE) | CAN_TXBC_TFQS(MEM_SIZE) | CAN_TXBC_TFQM(0)); //set Tx fifo RAM starting address and size of array then size of fifo, then we turn on FIFO operation 
 
 	//SAMC21 demo sets Tx Event fifo
 	CAN0_REGS->CAN_TXEFC = (CAN_TXEFC_EFSA(event) | CAN_TXEFC_EFS(MEM_SIZE) | CAN_TXEFC_EFWM(0)); //Set our tx event fifo addr and size then turn off watermark
@@ -181,3 +181,28 @@ void dequeueCanTxMsg(){
 
 }
 
+//gets the write index pointer
+uint8_t putIndexTx(){
+	return (uint8_t)(CAN0_REGS->CAN_TXFQS & CAN_TXFQS_TFQPI_Msk);
+}
+
+//gets the fifo/queue head
+uint8_t getIndexTx(){
+	return (uint8_t)(CAN0_REGS->CAN_TXFQS & CAN_TXFQS_TFGI_Msk);
+}
+
+//writes the message to the correct index of the tx buffer
+void writeTx(CAN_MSG *msg){
+	uint8_t index = putIndexTx();	
+	uint32_t out = 0;
+	//do message casting to correct word layout here
+	
+	txRam[index] = out;
+
+}
+
+void sendTx(){
+
+		CAN0_REGS->CAN_TXBAR |= 1 << getIndexTx();
+
+}

@@ -51,6 +51,10 @@ void getCanRxBuffData(uint8_t index, CAN_MSG *msg, uint32_t *ramAddr);
 bool hasRxBuffData(uint8_t index);
 
 //tx 3
+uint8_t putIndexTx();
+uint8_t getIndexTx();
+void writeTx(CAN_MSG *msg);
+void sendTx();
 void sendCanTXbuffer(uint8_t index);
 void enqueueCanTxMsg(uint32_t id, uint8_t length, const uint8_t *data);
 void dequeueCanTxMsg();
