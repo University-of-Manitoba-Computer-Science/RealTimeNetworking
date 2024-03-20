@@ -10,6 +10,8 @@
 #define CAN_CCCR_INIT_MODE_Msk (CAN_CCCR_INIT_Msk & CAN_CCCR_CCE_Msk) // This is so we can set INIT nad CCE at once
 void clkCAN(){
 
+	//need to set up a clock for between 20-40 MHz for can controller
+	//
     GCLK_REGS->GCLK_PCHCTRL[CAN0_GCLK_ID] = GCLK_PCHCTRL_CHEN_Msk;
 	while((GCLK_REGS->GCLK_PCHCTRL[CAN0_GCLK_ID] & GCLK_PCHCTRL_CHEN_Msk) != GCLK_PCHCTRL_CHEN_Msk){
 		//wait for sync
