@@ -83,14 +83,14 @@ void __assert_func(const char *fileName, int lineNum, const char *caller, const 
 void heartInit(){
   // setup the main clock/CPU clock to run at 120MHz
 
-  // set generator 2 to use DFLL0  as source; with a divider of 48 that gives us 1MHz
-  GCLK_REGS->GCLK_GENCTRL[OSCCTRL_GCLK_ID_FDPLL1] = GCLK_GENCTRL_DIV(48) | GCLK_GENCTRL_SRC_DFLL | GCLK_GENCTRL_GENEN_Msk;
+  // set generator 2 to use DFLL48M as source; with a divider of 48 that gives us 1MHz
+  GCLK_REGS->GCLK_GENCTRL[2] = GCLK_GENCTRL_DIV(48) | GCLK_GENCTRL_SRC_DFLL | GCLK_GENCTRL_GENEN_Msk;
   while ((GCLK_REGS->GCLK_SYNCBUSY & GCLK_SYNCBUSY_GENCTRL_GCLK2) == GCLK_SYNCBUSY_GENCTRL_GCLK2)
     ; /* Wait for synchronization */
 
   // set DPLL0 peripheral to use generator 2 as its clock
   // see page 156 of data sheet for GCLK array offsets
-  GCLK_REGS->GCLK_PCHCTRL[OSCCTRL_GCLK_ID_FDPLL0] = GCLK_PCHCTRL_GEN_GCLK2 | GCLK_PCHCTRL_CHEN_Msk;
+  GCLK_REGS->GCLK_PCHCTRL[1] = GCLK_PCHCTRL_GEN_GCLK2 | GCLK_PCHCTRL_CHEN_Msk;
   while ((GCLK_REGS->GCLK_PCHCTRL[1] & GCLK_PCHCTRL_CHEN_Msk) != GCLK_PCHCTRL_CHEN_Msk)
     ; /* Wait for synchronization */
 

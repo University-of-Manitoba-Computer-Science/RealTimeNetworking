@@ -6,8 +6,6 @@
 #define I2C_BAUD (16U)
 #define WRITE false
 #define READ true
-#define I2C_CLK_DIV 320UL
-
 
 #define GYRO_I2C_AG (0x6B)
 #define GYRO_I2C_M (0x1D)

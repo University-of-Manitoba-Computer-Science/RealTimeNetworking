@@ -6,14 +6,10 @@ void clkI2C(){
 	//36.5.1 I/O Lines
 	//See portIni	
 	
-	//setup generic clock 3 to be within I2C speed range
-	//This should give us a 100khz clock to run the peripheral off of
-	GCLK_REGS->GCLK_GENCTRL[3] = GCLK_GENCTRL_DIV(I2C_CLK_DIV) | GCLK_GENCTRL_SRC_XOSC0 | GCLK_GENCTRL_GENEN_Msk;
-
 	//36.5.3 Clocks
 	//Our I2C is connected to SERCOM2 so we need to configure the clocks for that
 	//We need both core and slow generic clocks enabled
-	GCLK_REGS->GCLK_PCHCTRL[SERCOM2_GCLK_ID_CORE] = GCLK_PCHCTRL_GEN_GCLK3  | GCLK_PCHCTRL_CHEN_Msk;
+	GCLK_REGS->GCLK_PCHCTRL[SERCOM2_GCLK_ID_CORE] |= GCLK_PCHCTRL_CHEN_Msk;
 	while((GCLK_REGS->GCLK_PCHCTRL[SERCOM2_GCLK_ID_CORE] & GCLK_PCHCTRL_CHEN_Msk) != GCLK_PCHCTRL_CHEN_Msk){
 		//wait for sync
 	}//while	
