@@ -1,6 +1,6 @@
 # default target when "make" is run w/o arguments
 
-.PHONY: all clean install
+.PHONY: all clean install sender-install receiver-install
 
 # device specific naming and (sub)paths
 DEVICE=same51j20a
@@ -43,8 +43,30 @@ build/main.o: main.c
 	mkdir -p build
 	$(CC) $(CFLAGS) $(INCLUDE_PATHS) $^ -o $@
 
+build/sender.o: sender.c
+	mkdir -p build
+	$(CC) $(CFLAGS) $(INCLUDE_PATHS) $^ -o $@
+
+build/receiver.o: receiver.c
+	mkdir -p build
+	$(CC) $(CFLAGS) $(INCLUDE_PATHS) $^ -o $@
+
 # build the executable file
 $(TARGET): $(OBJS) $(SYS_OBJS) build/main.o
+	mkdir -p build
+	$(CC) -o $@ $(LDFLAGS) $^
+	arm-none-eabi-objcopy -O ihex -R .eeprom -R .fuse -R .lock -R .signature  $@ $(patsubst %.elf,%.hex,$@)
+	arm-none-eabi-objdump -h -S $@ > $(patsubst %.elf,%.lss,$@)
+	arm-none-eabi-size $@
+
+$(BUILDDIR)/sender.elf: $(OBJS) $(SYS_OBJS) build/sender.o
+	mkdir -p build
+	$(CC) -o $@ $(LDFLAGS) $^
+	arm-none-eabi-objcopy -O ihex -R .eeprom -R .fuse -R .lock -R .signature  $@ $(patsubst %.elf,%.hex,$@)
+	arm-none-eabi-objdump -h -S $@ > $(patsubst %.elf,%.lss,$@)
+	arm-none-eabi-size $@
+
+$(BUILDDIR)/receiver.elf: $(OBJS) $(SYS_OBJS) build/receiver.o
 	mkdir -p build
 	$(CC) -o $@ $(LDFLAGS) $^
 	arm-none-eabi-objcopy -O ihex -R .eeprom -R .fuse -R .lock -R .signature  $@ $(patsubst %.elf,%.hex,$@)
@@ -56,4 +78,10 @@ clean:
 
 # put the executable on the device
 install: $(TARGET)
+	openocd -f board/$(BOARD).cfg -c "program $< verify reset exit"
+
+sender-install: $(BUILDDIR)/sender.elf
+	openocd -f board/$(BOARD).cfg -c "program $< verify reset exit"
+
+receiver-install: $(BUILDDIR)/receiver.elf
 	openocd -f board/$(BOARD).cfg -c "program $< verify reset exit"

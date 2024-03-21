@@ -67,9 +67,6 @@ int main(void)
             queue_message(data, 1);
 
             PORT_REGS->GROUP[0].PORT_OUTTGL = PORT_PA14;
-
-            uint8_t rx_data[16];
-            while ((dequeue_message(rx_data, 16)) != -1);
         }
     }
     return 0;

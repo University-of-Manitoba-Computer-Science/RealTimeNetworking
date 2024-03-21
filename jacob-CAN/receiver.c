@@ -63,9 +63,6 @@ int main(void)
     while (1) {
         __WFI();
         if ((msCount % LED_FLASH_MS) == 0) {
-            uint8_t data[1] = {test++};
-            queue_message(data, 1);
-
             PORT_REGS->GROUP[0].PORT_OUTTGL = PORT_PA14;
 
             uint8_t rx_data[16];
