@@ -104,3 +104,9 @@ static void _hal_ll_spi_master_read_bare_metal(hal_ll_spi_master_hw_specifics_ma
     }
 }
 ```
+
+https://github.com/MikroElektronika/mikrosdk_v2/blob/a0ba439bfa61be8f176762efc9e715a61a84d2d7/targets/arm/mikroe/nxp/src/spi_master/implementation_1/hal_ll_spi_master.c#L797
+
+/Users/landon/Downloads/wifi_7/firmware/src/config/sam_e51_cnano/peripheral/sercom/spi_master/plib_sercom1_spi_master.c
+/Users/landon/Downloads/wifi_7/firmware/src/config/sam_e51_cnano/driver/winc/wdrv_winc.c
+m2m_wifi_get_firmware_version

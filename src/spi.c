@@ -4,6 +4,8 @@
 
 // see https://github.com/MikroElektronika/mikrosdk_v2/blob/a0ba439bfa61be8f176762efc9e715a61a84d2d7/drv/lib/include/drv_spi_master.h#L423
 
+#define DUMMY 0x00
+
 void init_spi()
 {
     // configure the pin directions
@@ -35,8 +37,6 @@ void init_spi()
     while ((SERCOM1_REGS->SPIM.SERCOM_SYNCBUSY) != 0U)
         ;
 
-    // fref = 120MHz, fbaud = 30MHz, BAUD = fref / (2 * fbaud) - 1
-    // set BAUD to 1 to get 30MHz baud rate, or
     SERCOM1_REGS->SPIM.SERCOM_BAUD = (uint8_t)SERCOM_SPIM_BAUD_BAUD(255);
 
     // configure the SPI peripheral to be a master, use default pads, use spi mode 0, data order msb, and enable the peripheral
@@ -144,7 +144,7 @@ uint8_t spi_io(void *tx_data, size_t tx_size, void *rx_data, size_t rx_size)
         }
         else if (diff_size > 0)
         {
-            SERCOM1_REGS->SPIM.SERCOM_DATA = 0x00;
+            SERCOM1_REGS->SPIM.SERCOM_DATA = DUMMY;
 
             diff_size--;
         }

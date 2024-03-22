@@ -844,8 +844,8 @@ err_t wifi8_default_cfg(wifi8_t *ctx)
 {
     // digital_out_high(&ctx->en);
     // digital_out_low(&ctx->rst);
-    PORT_REGS->GROUP[0].PORT_OUTCLR = SPI0_RST_Msk;
     PORT_REGS->GROUP[0].PORT_OUTSET = SPI0_EN_Msk;
+    PORT_REGS->GROUP[0].PORT_OUTCLR = SPI0_RST_Msk;
 
     Delay_100ms();
 
