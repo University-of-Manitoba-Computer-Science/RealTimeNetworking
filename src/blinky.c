@@ -72,22 +72,13 @@ int main(void)
   delay_ms(2000);
 
   // set the default configuration
-  while (1)
+  if (WIFI8_OK != wifi8_default_cfg(&ctx))
   {
-    if (WIFI8_OK != wifi8_default_cfg(&ctx))
-    {
-      printf("error setting default config\n");
-      // for (;;)
-      //   ;
-      Delay_100ms();
-    }
-    else
-    {
-      break;
-    }
+    printf("error setting default config\n");
+    for (;;)
+      ;
   }
-
-  printf("wifi chip initialized properly.\n");
+  printf("wifi chip initialization completed.\n");
 
   // sleep until we have an interrupt
   while (1)
