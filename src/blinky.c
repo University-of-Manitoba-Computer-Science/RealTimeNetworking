@@ -72,33 +72,22 @@ int main(void)
   delay_ms(2000);
 
   // set the default configuration
-  if (WIFI8_OK != wifi8_default_cfg(&ctx))
+  while (1)
   {
-    printf("error setting default config\n");
-    for (;;)
-      ;
+    if (WIFI8_OK != wifi8_default_cfg(&ctx))
+    {
+      printf("error setting default config\n");
+      // for (;;)
+      //   ;
+      Delay_100ms();
+    }
+    else
+    {
+      break;
+    }
   }
 
-  // get the firmware version
-  wifi8_m2m_rev_t fw_version;
-  if (WIFI8_OK == wifi8_get_full_firmware_version(&ctx, &fw_version))
-  {
-    printf("Firmware HIF (%u) : %u.%u \n",
-           ((uint16_t)(((fw_version.u16_firmware_hif_info) >> (14)) & (0x3))),
-           ((uint16_t)(((fw_version.u16_firmware_hif_info) >> (8)) & (0x3f))),
-           ((uint16_t)(((fw_version.u16_firmware_hif_info) >> (0)) & (0xff))));
-    printf("Firmware ver   : %u.%u.%u \n",
-           (uint16_t)fw_version.u8_firmware_major,
-           (uint16_t)fw_version.u8_firmware_minor,
-           (uint16_t)fw_version.u8_firmware_patch);
-    printf("Firmware Build %s Time %s\n", fw_version.build_date, fw_version.build_time);
-  }
-  else
-  {
-    printf("error reading full firmware version\n");
-    for (;;)
-      ;
-  }
+  printf("wifi chip initialized properly.\n");
 
   // sleep until we have an interrupt
   while (1)

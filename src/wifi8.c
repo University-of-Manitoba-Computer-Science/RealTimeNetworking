@@ -867,17 +867,8 @@ err_t wifi8_generic_write(wifi8_t *ctx, uint8_t *data_in, uint8_t len)
     // TODO: Implement SPI write function
 
     spi_select_device(SPI0_CS_Msk);
-    // delay 10us
-    for (uint32_t i = 0; i < 1000; i++)
-    {
-        asm("nop");
-    }
     // err_t error_flag = spi_write(data_in, len);
     err_t error_flag = spi_io(data_in, len, NULL, 0);
-    for (uint32_t i = 0; i < 1000; i++)
-    {
-        asm("nop");
-    }
     spi_deselect_device(SPI0_CS_Msk);
 
     return error_flag;
@@ -893,16 +884,8 @@ err_t wifi8_generic_read(wifi8_t *ctx, uint8_t *data_out, uint8_t len)
     // TODO: Implement SPI read function
 
     spi_select_device(SPI0_CS_Msk);
-    for (uint32_t i = 0; i < 1000; i++)
-    {
-        asm("nop");
-    }
     // err_t error_flag = spi_read(data_out, len);
     err_t error_flag = spi_io(NULL, 0, data_out, len);
-    for (uint32_t i = 0; i < 1000; i++)
-    {
-        asm("nop");
-    }
     spi_deselect_device(SPI0_CS_Msk);
 
     return error_flag;
@@ -1749,7 +1732,7 @@ static err_t wifi8_hold(wifi8_t *ctx)
         (WIFI8_OK != wifi8_reg_read(ctx, 0x13F4, &rf_rev)) ||
         (WIFI8_OK != wifi8_reg_read(ctx, 0x3B0000ul, &ble_id)))
     {
-        printf("Failed to read firmware ID!\r\n");
+        // it fails here
         return WIFI8_ERROR;
     }
 

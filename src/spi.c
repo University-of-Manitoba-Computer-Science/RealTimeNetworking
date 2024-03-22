@@ -9,17 +9,17 @@
 void init_spi()
 {
     // configure the pin directions
-    PORT_REGS->GROUP[0].PORT_DIRSET |= SPI0_CS_Msk;
-    PORT_REGS->GROUP[0].PORT_OUTSET |= SPI0_CS_Msk;
+    // PORT_REGS->GROUP[0].PORT_DIRSET |= SPI0_CS_Msk;
+    // PORT_REGS->GROUP[0].PORT_OUTSET |= SPI0_CS_Msk;
 
     // configure SPI pins
     PORT_REGS->GROUP[0].PORT_PINCFG[SPI0_MOSI] = PORT_PINCFG_PMUXEN_Msk;
     PORT_REGS->GROUP[0].PORT_PINCFG[SPI0_MISO] = PORT_PINCFG_PMUXEN_Msk;
     PORT_REGS->GROUP[0].PORT_PINCFG[SPI0_SCK] = PORT_PINCFG_PMUXEN_Msk;
-    // PORT_REGS->GROUP[0].PORT_PINCFG[SS] = PORT_PINCFG_PMUXEN_Msk;
+    PORT_REGS->GROUP[0].PORT_PINCFG[SPI0_CS] = PORT_PINCFG_PMUXEN_Msk;
 
     PORT_REGS->GROUP[0].PORT_PMUX[8] = PORT_PMUX_PMUXE_C | PORT_PMUX_PMUXO_C;
-    PORT_REGS->GROUP[0].PORT_PMUX[9] = PORT_PMUX_PMUXO_C;
+    PORT_REGS->GROUP[0].PORT_PMUX[9] = PORT_PMUX_PMUXO_C | PORT_PMUX_PMUXE_C;
 
     // configure generic clock generator 3 to use the DFLL
     GCLK_REGS->GCLK_GENCTRL[3] = GCLK_GENCTRL_DIV(48) | GCLK_GENCTRL_SRC_DFLL | GCLK_GENCTRL_GENEN_Msk;
@@ -33,7 +33,7 @@ void init_spi()
     MCLK_REGS->MCLK_APBAMASK |= MCLK_APBAMASK_SERCOM1_Msk;
 
     // configure the SPI peripheral to use 8-bit data and enable the receiver
-    SERCOM1_REGS->SPIM.SERCOM_CTRLB = SERCOM_SPIM_CTRLB_CHSIZE_8_BIT | SERCOM_SPIM_CTRLB_RXEN_Msk;
+    SERCOM1_REGS->SPIM.SERCOM_CTRLB = SERCOM_SPIM_CTRLB_CHSIZE_8_BIT | SERCOM_SPIM_CTRLB_RXEN_Msk | SERCOM_SPIM_CTRLB_MSSEN_Msk;
     while ((SERCOM1_REGS->SPIM.SERCOM_SYNCBUSY) != 0U)
         ;
 
@@ -183,11 +183,11 @@ uint8_t spi_io(void *tx_data, size_t tx_size, void *rx_data, size_t rx_size)
 // select the device by setting the CS pin low
 void spi_select_device(uint32_t pin)
 {
-    PORT_REGS->GROUP[0].PORT_OUTCLR |= pin;
+    // PORT_REGS->GROUP[0].PORT_OUTCLR |= pin;
 }
 
 // deselect the device by setting the CS pin high
 void spi_deselect_device(uint32_t pin)
 {
-    PORT_REGS->GROUP[0].PORT_OUTSET |= pin;
+    // PORT_REGS->GROUP[0].PORT_OUTSET |= pin;
 }

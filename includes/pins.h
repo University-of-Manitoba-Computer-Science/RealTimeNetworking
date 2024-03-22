@@ -12,18 +12,18 @@
 
 #include "sam.h"
 
-#define SPI0_EN PIN_PA06
-#define SPI0_RST PIN_PA22
-#define SPI0_CS PIN_PA23
+#define SPI0_EN PIN_PA02
+#define SPI0_RST PIN_PA07
+#define SPI0_CS PIN_PA18
 #define SPI0_SCK PIN_PA17
 #define SPI0_MISO PIN_PA19
 #define SPI0_MOSI PIN_PA16
-#define SPI0_INT PIN_PA09
+#define SPI0_INT PIN_PA04
 
-#define SPI0_EN_Msk PORT_PA06
-#define SPI0_RST_Msk PORT_PA22
-#define SPI0_CS_Msk PORT_PA23
+#define SPI0_EN_Msk PORT_PA02
+#define SPI0_RST_Msk PORT_PA07
+#define SPI0_CS_Msk PORT_PA18
 #define SPI0_SCK_Msk PORT_PA17
 #define SPI0_MISO_Msk PORT_PA19
 #define SPI0_MOSI_Msk PORT_PA16
-#define SPI0_INT_Msk PORT_PA09
+#define SPI0_INT_Msk PORT_PA04
