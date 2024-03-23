@@ -821,6 +821,15 @@ err_t wifi8_init(wifi8_t *ctx)
     PORT_REGS->GROUP[0].PORT_DIRCLR = SPI0_INT_Msk;
     PORT_REGS->GROUP[0].PORT_OUTCLR = SPI0_EN_Msk | SPI0_RST_Msk;
 
+    // PORT_REGS->GROUP[0].PORT_PINCFG[SPI0_INT] = PORT_PINCFG_PMUXEN_Msk;
+    // PORT_REGS->GROUP[0].PORT_PMUX[2] = PORT_PMUX_PMUXE_A;
+
+    // NVIC_EnableIRQ(EIC_EXTINT_4_IRQn);
+
+    ctx->en = SPI0_EN_Msk;
+    ctx->rst = SPI0_RST_Msk;
+    ctx->int_pin = SPI0_INT_Msk;
+
     ctx->hif_bl_offset = 0;
     ctx->device_state = NM_STATE_DEINIT;
     ctx->ch_num = 0;
@@ -864,8 +873,6 @@ err_t wifi8_generic_write(wifi8_t *ctx, uint8_t *data_in, uint8_t len)
     // err_t error_flag = spi_master_write(&ctx->spi, data_in, len);
     // spi_master_deselect_device(ctx->chip_select);
 
-    // TODO: Implement SPI write function
-
     spi_select_device(SPI0_CS_Msk);
     // err_t error_flag = spi_write(data_in, len);
     err_t error_flag = spi_io(data_in, len, NULL, 0);
@@ -880,8 +887,6 @@ err_t wifi8_generic_read(wifi8_t *ctx, uint8_t *data_out, uint8_t len)
     // Delay_10us();
     // err_t error_flag = spi_master_read(&ctx->spi, data_out, len);
     // spi_master_deselect_device(ctx->chip_select);
-
-    // TODO: Implement SPI read function
 
     spi_select_device(SPI0_CS_Msk);
     // err_t error_flag = spi_read(data_out, len);
@@ -1099,7 +1104,6 @@ err_t wifi8_init_drv(wifi8_t *ctx)
     }
     else
     {
-
         return wifi8_start(ctx);
     }
 }
@@ -2820,6 +2824,7 @@ static err_t hif_isr(wifi8_t *ctx)
 
     if (WIFI8_OK == wifi8_reg_read(ctx, WIFI_HOST_RCV_CTRL_0, &reg))
     {
+
         if (reg & 0x1) /* New interrupt has been received */
         {
             uint16_t buf_len;
@@ -2949,8 +2954,8 @@ err_t hif_handle_isr(wifi8_t *ctx)
 {
     hif_cxt.u8_yield = 0;
 
-    // TODO: Read the interrupt pin
-    if (PORT_REGS->GROUP[0].PORT_IN & SPI0_INT_Msk)
+    // if (!digital_in_read(&ctx->int_pin))
+    if (!(PORT_REGS->GROUP[0].PORT_IN & ctx->int_pin))
     {
         hif_cxt.u8_interrupt++;
     }
