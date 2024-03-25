@@ -165,10 +165,10 @@ int main(void)
   addr.sin_port = (uint16_t)((((uint16_t)((MAIN_TCP_SERVER_PORT))) << 8) | (((uint16_t)((MAIN_TCP_SERVER_PORT))) >> 8));
   addr.sin_addr.s_addr = 0;
 
+  // led indicates when server is running and ready to accept connections
+  PORT_REGS->GROUP[0].PORT_OUTCLR = PORT_PA14;
   printf("main: starting server\n");
 
-  // sleep until we have an interrupt
-  PORT_REGS->GROUP[0].PORT_OUTCLR = PORT_PA14;
   while (1)
   {
 
