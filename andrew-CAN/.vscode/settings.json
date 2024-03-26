@@ -17,6 +17,7 @@
   "files.associations": {
     "sam.h": "c",
     "gyro.h": "c",
-    "stdbool.h": "c"
+    "stdbool.h": "c",
+    "uart.h": "c"
   }
 }

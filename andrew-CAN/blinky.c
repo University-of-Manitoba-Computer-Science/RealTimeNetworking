@@ -3,22 +3,23 @@
 #include "can.h"
 #include "i2c.h"
 #include "button.h"
+#include "uart.h"
 #include <assert.h>
 
 
 #define DEBUG_WAIT 10000000UL
 // setup our heartbeat to be 1ms: we overflow at 1ms intervals with a 120MHz clock
 // uses the SysTicks unit so that we get reliable debugging (timer stops on breakpoints)
-#define MS_TICKS 120000UL
-
+//#define MS_TICKS 120000UL
+#define MS_TICKS 30000UL
 // number of millisecond between LED flashes
-#define LED_FLASH_MS 250UL
-#define GYRO_CHECK_MS 510UL
+#define LED_FLASH_MS 1000UL
+#define GYRO_CHECK_MS 1000UL
 void heartInit();
 
 // NOTE: this overflows every ~50 days, so I'm not going to care here...
 volatile uint32_t msCount = 0;
-
+volatile uint32_t secCount = 0; 
 
 
 void initAllPorts(){
@@ -28,16 +29,18 @@ void initAllPorts(){
   PORT_REGS->GROUP[0].PORT_OUTSET = PORT_PA14;
 
   port15Init(); //init button ports
-  sercom2Init(); //init sercom2 -> i2c ports
-  CAN0Init(); //init CAN0 ports
+ // sercom2Init(); //init sercom2 -> i2c ports
+ // CAN0Init(); //init CAN0 ports
+  portUART(); //init UART ports
 
 }//initAllPorts
 
 void initAllClks(){
 
   clkButton();
-  clkI2C();
-  clkCAN();
+  //clkI2C();
+  //clkCAN();
+  clkUART();
 
 }//initAllClks
 
@@ -46,10 +49,14 @@ void initAll(){
   heartInit();
   initAllClks();
   initAllPorts();
-  initI2C();
+ // initI2C();
   initButton();
-  initCAN(msgAddr,txAddr,rxAddr,eventAddr,rxBuffAddr);
-  accelOnlyMode();
+  //initCAN(msgAddr,txAddr,rxAddr,eventAddr,rxBuffAddr);
+  initUART();
+
+  //init gyro stuff
+  //accelOnlyMode();
+
 }
 
 
@@ -83,20 +90,20 @@ void __assert_func(const char *fileName, int lineNum, const char *caller, const 
 void heartInit(){
   // setup the main clock/CPU clock to run at 120MHz
 
-  // set generator 2 to use DFLL48M as source; with a divider of 48 that gives us 1MHz
+  // set generator 2 to use DFLL0  as source; with a divider of 48 that gives us 1MHz
   GCLK_REGS->GCLK_GENCTRL[2] = GCLK_GENCTRL_DIV(48) | GCLK_GENCTRL_SRC_DFLL | GCLK_GENCTRL_GENEN_Msk;
   while ((GCLK_REGS->GCLK_SYNCBUSY & GCLK_SYNCBUSY_GENCTRL_GCLK2) == GCLK_SYNCBUSY_GENCTRL_GCLK2)
     ; /* Wait for synchronization */
 
   // set DPLL0 peripheral to use generator 2 as its clock
   // see page 156 of data sheet for GCLK array offsets
-  GCLK_REGS->GCLK_PCHCTRL[1] = GCLK_PCHCTRL_GEN_GCLK2 | GCLK_PCHCTRL_CHEN_Msk;
+  GCLK_REGS->GCLK_PCHCTRL[OSCCTRL_GCLK_ID_FDPLL0] = GCLK_PCHCTRL_GEN_GCLK2 | GCLK_PCHCTRL_CHEN_Msk;
   while ((GCLK_REGS->GCLK_PCHCTRL[1] & GCLK_PCHCTRL_CHEN_Msk) != GCLK_PCHCTRL_CHEN_Msk)
     ; /* Wait for synchronization */
 
   // DPLL in integer mode: multiply generator clk by 120, giving us 120MHz
   OSCCTRL_REGS->DPLL[0].OSCCTRL_DPLLCTRLB = OSCCTRL_DPLLCTRLB_FILTER(0) | OSCCTRL_DPLLCTRLB_LTIME(0) | OSCCTRL_DPLLCTRLB_REFCLK(0);
-  OSCCTRL_REGS->DPLL[0].OSCCTRL_DPLLRATIO = OSCCTRL_DPLLRATIO_LDRFRAC(0) | OSCCTRL_DPLLRATIO_LDR(119);
+  OSCCTRL_REGS->DPLL[0].OSCCTRL_DPLLRATIO = OSCCTRL_DPLLRATIO_LDRFRAC(0) | OSCCTRL_DPLLRATIO_LDR(30);
   while ((OSCCTRL_REGS->DPLL[0].OSCCTRL_DPLLSYNCBUSY & OSCCTRL_DPLLSYNCBUSY_DPLLRATIO_Msk) == OSCCTRL_DPLLSYNCBUSY_DPLLRATIO_Msk)
     ; /* Wait for synchronization */
 
@@ -176,57 +183,23 @@ int main(void){
   // some example logging calls
 #ifndef NDEBUG
   dbg_write_str("~~~DEBUG ENABLED~~~\n");
-
-/*
-  dbg_write_char('t');
-  dbg_write_char('e');
-  dbg_write_char('s');
-  dbg_write_char('t');
-  dbg_write_char('\n');
-
-  unsigned long test_u32 = 0x01234567;
-  dbg_write_u32(&test_u32, 1);
-
-  static const unsigned short test_u16[] = {0x0123, 0x4567, 0x89AB, 0xCDEF, 0x0123, 0x4567, 0x89AB, 0xCDEF};
-  dbg_write_u16(test_u16, 8);
-
-  static const unsigned char test_u8[] = {0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xAA, 0xBB, 0xCC, 0XDD, 0xEE, 0xFF};
-  dbg_write_u8(test_u8, 16);
-  */
 #endif
+
   PORT_REGS->GROUP[0].PORT_OUTTGL = PORT_PA14;
   // sleep until we have an interrupt
   while (1){
     __WFI();
-    /* uncomment the line below to trace every time this code is reached
-     * WARNING: making this call induces a SIGNIFICANT delay, use sparingly and wisely (if at all)
-     *          calling it every time you wake is **not** wise
-     * to show how often the trace point was hit use the following debugger command:
-     * monitor trace point
-     */
-    //    dbg_trace_point(0);
 
-    // demo an assertion firing into the debugger
-    // assert(msCount != 250);
-
-    // TODO: make proper task scheduling!
     if ((msCount % LED_FLASH_MS) == 0){
+      txUART((uint8_t)secCount);
+      secCount ++;
       PORT_REGS->GROUP[0].PORT_OUTTGL = PORT_PA14;
       #ifndef NDEBUG
-        dbg_write_u32(&msgAddr, 1);
-        uint32_t *test = (CAN0_REGS->CAN_SIDFC & CAN_SIDFC_FLSSA_Msk) >> CAN_SIDFC_FLSSA_Pos;
-        dbg_write_u32(&test,1);
+
       #endif
-
-
-      //sampleXL();
      
     }
-    else if ((msCount % GYRO_CHECK_MS) == 0){
-    
-      
-      //test();
-    }
+
   }
   return 0;
 }
