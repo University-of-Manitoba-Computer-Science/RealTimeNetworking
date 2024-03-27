@@ -1,7 +1,5 @@
 #include "sam.h"
 #include "dcc_stdio.h"
-#include "can.h"
-#include "i2c.h"
 #include "button.h"
 #include "uart.h"
 #include <assert.h>
@@ -191,11 +189,11 @@ int main(void){
     __WFI();
 
     if ((msCount % LED_FLASH_MS) == 0){
-      txUART((uint8_t)secCount);
-      secCount ++;
+      txUART((uint8_t)0x06);
+      secCount = secCount + 1;
       PORT_REGS->GROUP[0].PORT_OUTTGL = PORT_PA14;
       #ifndef NDEBUG
-
+        dbg_write_u32(&secCount,1);
       #endif
      
     }

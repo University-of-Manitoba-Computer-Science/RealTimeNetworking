@@ -17,7 +17,7 @@ ASFLAGS=-mthumb -mcpu=$(CPU) -D__$(DEVICE_UPPER)__ -O1 -ffunction-sections -Wall
 CFLAGS=-x c -mthumb -mcpu=$(CPU) -D__$(DEVICE_UPPER)__ -O1 -ffunction-sections -Wall -c -std=gnu99
 LDFLAGS=-Wl,--start-group -lm  -Wl,--end-group -Wl,--gc-sections -mthumb -mcpu=$(CPU) -T../$(PACK)/gcc/gcc/$(DEVICE)_flash.ld 
 
-SYS_OBJS=../$(PACK)/gcc/system_$(DEVICE).o ../$(PACK)/gcc/gcc/startup_$(DEVICE).o dcc_stdio.o ./driver/button.o ./driver/can.o ./driver/i2c.o ./driver/uart.o
+SYS_OBJS=../$(PACK)/gcc/system_$(DEVICE).o ../$(PACK)/gcc/gcc/startup_$(DEVICE).o dcc_stdio.o ./driver/button.o ./driver/uart.o
 
 debug: CFLAGS += -g
 debug: clean all

@@ -18,9 +18,12 @@ void initUART(){
     //disable the USART sercom
     SERCOM0_REGS->USART_INT.SERCOM_CTRLA = SERCOM_USART_INT_CTRLA_ENABLE(0);
     
+
+    //todo: I have changed how TXP0 works along with RXP0 to select PAD1 for RX as per the spec, but I need to make sure the TXP0 mode change from 0x0 to 0x2 works
     //The following sets up CTRLA as follows
-    //selects async mode, with internal clock, RX and TX on SERCOM0 with internal clock, sets to MSB mode
-    SERCOM0_REGS->USART_INT.SERCOM_CTRLA = SERCOM_USART_INT_CTRLA_MODE(0X1) | SERCOM_USART_INT_CTRLA_CMODE_ASYNC | SERCOM_USART_INT_CTRLA_RXPO(0X0) | SERCOM_USART_INT_CTRLA_TXPO(0x0) | SERCOM_USART_INT_CTRLA_DORD_MSB;
+    //selects async mode, with internal clock, RX (PAD1) and TX (PAD0) on SERCOM0 with internal clock, sets to MSB mode
+    //Not sure if we want TXP0 as mode 0x0 (sercom pad 0 for rx but pad 1 gets used for exck) or mode 0x2 where we dont use pad 1 for anything else. 
+    SERCOM0_REGS->USART_INT.SERCOM_CTRLA = SERCOM_USART_INT_CTRLA_MODE_USART_INT_CLK | SERCOM_USART_INT_CTRLA_CMODE(0x0) | SERCOM_USART_INT_CTRLA_RXPO(RX_MODE) | SERCOM_USART_INT_CTRLA_TXPO(TX_MODE) | SERCOM_USART_INT_CTRLA_DORD_LSB | SERCOM_USART_INT_CTRLA_FORM(0X4);
 
     //The following sets up CTRLB as follows
     SERCOM0_REGS->USART_INT.SERCOM_CTRLB = SERCOM_USART_INT_CTRLB_CHSIZE_8_BIT | SERCOM_USART_INT_CTRLB_SBMODE_1_BIT;
@@ -52,8 +55,20 @@ void portUART(){
 }
 
 void txUART(uint8_t data){
+    SERCOM0_REGS->USART_INT.SERCOM_CTRLB |= SERCOM_USART_INT_CTRLB_TXEN_Msk;
+    while((SERCOM0_REGS->USART_INT.SERCOM_SYNCBUSY & SERCOM_USART_INT_SYNCBUSY_CTRLB_Msk) != 0){
+        //Wait for CTRLB to sync
+    }
+    SERCOM0_REGS->USART_INT.SERCOM_INTFLAG |= SERCOM_USART_INT_INTFLAG_DRE_Msk;
+    SERCOM0_REGS->USART_INT.SERCOM_DATA = 0X1;
 
+    SERCOM0_REGS->USART_INT.SERCOM_INTFLAG |= SERCOM_USART_INT_INTFLAG_DRE_Msk;
     SERCOM0_REGS->USART_INT.SERCOM_DATA = data;
+
+    SERCOM0_REGS->USART_INT.SERCOM_CTRLB &= ~(SERCOM_USART_INT_CTRLB_TXEN_Msk);
+    while((SERCOM0_REGS->USART_INT.SERCOM_SYNCBUSY & SERCOM_USART_INT_SYNCBUSY_CTRLB_Msk) != 0){
+        //Wait for CTRLB to sync
+    }
 
 }
 
