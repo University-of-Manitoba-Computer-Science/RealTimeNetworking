@@ -9,7 +9,7 @@
 // setup our heartbeat to be 1ms: we overflow at 1ms intervals with a 120MHz clock
 // uses the SysTicks unit so that we get reliable debugging (timer stops on breakpoints)
 //#define MS_TICKS 120000UL
-#define MS_TICKS 30000UL
+#define MS_TICKS 120000UL
 // number of millisecond between LED flashes
 #define LED_FLASH_MS 1000UL
 #define GYRO_CHECK_MS 1000UL
@@ -101,7 +101,7 @@ void heartInit(){
 
   // DPLL in integer mode: multiply generator clk by 120, giving us 120MHz
   OSCCTRL_REGS->DPLL[0].OSCCTRL_DPLLCTRLB = OSCCTRL_DPLLCTRLB_FILTER(0) | OSCCTRL_DPLLCTRLB_LTIME(0) | OSCCTRL_DPLLCTRLB_REFCLK(0);
-  OSCCTRL_REGS->DPLL[0].OSCCTRL_DPLLRATIO = OSCCTRL_DPLLRATIO_LDRFRAC(0) | OSCCTRL_DPLLRATIO_LDR(30);
+  OSCCTRL_REGS->DPLL[0].OSCCTRL_DPLLRATIO = OSCCTRL_DPLLRATIO_LDRFRAC(0) | OSCCTRL_DPLLRATIO_LDR(120);
   while ((OSCCTRL_REGS->DPLL[0].OSCCTRL_DPLLSYNCBUSY & OSCCTRL_DPLLSYNCBUSY_DPLLRATIO_Msk) == OSCCTRL_DPLLSYNCBUSY_DPLLRATIO_Msk)
     ; /* Wait for synchronization */
 
@@ -189,7 +189,7 @@ int main(void){
     __WFI();
 
     if ((msCount % LED_FLASH_MS) == 0){
-      txUART((uint8_t)0x06);
+      txUART(secCount);
       secCount = secCount + 1;
       PORT_REGS->GROUP[0].PORT_OUTTGL = PORT_PA14;
       #ifndef NDEBUG
