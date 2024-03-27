@@ -2,6 +2,7 @@
 #include <stddef.h>
 #include <stdbool.h>
 
+//Look at the equation source is 16mhz target 1mhz
 #define UART_BUAD 0x02
 #define TX_MODE 0x0
 #define RX_MODE 0x1
