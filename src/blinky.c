@@ -21,6 +21,12 @@ static t_msg_wifi_product msg_wifi_product =
     {
         .name = "WiFi 8 Click"};
 
+static char http_response[] = "HTTP/1.1 200 OK\r\n"
+                              "Content-Type: text/html\r\n"
+                              "Content-Length: 11\r\n"
+                              "\r\n"
+                              "Hello World";
+
 static uint8_t gau8_socket_test_buffer[1024] = {0};
 
 static int8_t tcp_server_socket = -1;
@@ -244,7 +250,14 @@ static void socket_cb(int8_t sock, uint8_t u8_msg, void *pv_msg)
 
       // log_printf(&logger, "socket_cb: accept success!\r\n");
       tcp_client_socket = pstr_accept->sock;
-      wifi8_socket_receive(&wifi8, pstr_accept->sock, gau8_socket_test_buffer, sizeof(gau8_socket_test_buffer), 5000);
+      wifi8_socket_send(&wifi8, tcp_client_socket, http_response, sizeof(http_response));
+      uint8_t result = wifi8_socket_receive(&wifi8, pstr_accept->sock, gau8_socket_test_buffer, sizeof(gau8_socket_test_buffer), 5000);
+      if (result != WIFI8_OK)
+      {
+        printf("socket_cb: receive error!\r\n");
+        wifi8_socket_close(&wifi8, tcp_client_socket);
+        tcp_client_socket = -1;
+      }
     }
     else
     {
@@ -268,7 +281,7 @@ static void socket_cb(int8_t sock, uint8_t u8_msg, void *pv_msg)
       printf("%s", pstr_recv->pu8_buffer);
       if ((strchr(pstr_recv->pu8_buffer, 13) != 0) || (strchr(pstr_recv->pu8_buffer, 10) != 0))
       {
-        wifi8_socket_send(&wifi8, sock, &msg_wifi_product, sizeof(t_msg_wifi_product));
+        wifi8_socket_send(&wifi8, sock, http_response, sizeof(http_response));
       }
       else
       {
