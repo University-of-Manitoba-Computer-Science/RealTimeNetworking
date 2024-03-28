@@ -79,3 +79,7 @@ We got two way communication working! We moved everything to the baseboard and u
 I got Andrew's Mikroe Base Board from Jacob earlier this week and everything worked perfectly! I was able to join my network, open a socket, and have reliable 2-way communication. I also was able to get a adhoc AP configured and working. I could connect my laptop to the broadcasted network and communicate with the board over a socket. Now I'm working on HTTP since I think we wanted to avoid an application running outside the board. I also was able to find some documentation on the ATWINC3400 data sheet itself regarding what commands it expects over SPI. It looks like it only supports 1 client connection to the AP at any given time, and I was able to confirm this by testing it on my phone and laptop. I'm trying to work around some _quirky_ behaviour on the chip currently, where incoming messages are split on \r\n before the arrive to our code, and the device seems to hang(-ish?) when it recieves a proper HTTP request. Not sure why this is yet, but I'm working on some theories!
 
 [Link to ATWINC3400 additional SDK stuff](https://ww1.microchip.com/downloads/en/DeviceDoc/Atmel-42566-ATWINC3400-WiFi-BLE-Network-Controller-Software-Design-Guide_UserGuide.pdf)
+
+# March 27 2024
+
+So, I decided that the board was dumb so I will fight dumb with dumber. Since the ATWIN was hang-ing on proper HTTP requests, I am now sending a blob of HTTP everytime a TCP connection is accepted. It works. It's disgusting, but it works.
