@@ -57,18 +57,21 @@ static t_msg_wifi_product msg_wifi_product =
 
 static uint8_t gau8_socket_test_buffer[1024] = {0};
 
+static uint32_t buffer_cursor = 0;
+static uint8_t buffer[1024] = {0};
+
 static int8_t tcp_server_socket = -1;
 static int8_t tcp_client_socket = -1;
 wifi8_sockaddr_in_t addr;
 
 static uint8_t wifi_connected;
+static uint8_t ap_status;
 
 static uint8_t scan_request_index = 0;
 
 static uint8_t num_found_ap = 0;
 
-static void wifi_cb(uint8_t u8_msg_type, void *pv_msg);
-
+static void ap_wifi_cb(uint8_t u8_msg_type, void *pv_msg);
 static void socket_cb(int8_t sock, uint8_t u8_msg, void *pv_msg);
 
 static wifi8_t wifi8;
@@ -112,9 +115,10 @@ int main(void)
   }
   printf("wifi chip initialization completed.\n");
 
-  wifi8.app_wifi_cb = wifi_cb;
-  wifi8.app_socket_cb = socket_cb;
   wifi_connected = M2M_WIFI_DISCONNECTED;
+  wifi8.app_wifi_cb = ap_wifi_cb;
+  wifi8.app_socket_cb = socket_cb;
+  ap_status = M2M_WIFI_DISCONNECTED;
 
   // set the default configuration
 
@@ -138,27 +142,31 @@ int main(void)
       ;
   }
 
-  if (wifi_connected == M2M_WIFI_DISCONNECTED)
+  wifi8_m2m_ap_config_t ap_config;
+
+  memset(&ap_config, 0, sizeof(wifi8_m2m_ap_config_t));
+  strcpy((char *)ap_config.au8ssid, "CANWeDoIt?");
+  ap_config.u8_listen_channel = 1;
+  ap_config.u8_sec_type = M2M_WIFI_SEC_OPEN;
+  ap_config.u8_ssid_hide = 0;
+  ap_config.au8dhcp_server_ip[0] = 192;
+  ap_config.au8dhcp_server_ip[1] = 168;
+  ap_config.au8dhcp_server_ip[2] = 1;
+  ap_config.au8dhcp_server_ip[3] = 1;
+
+  if (ap_status == M2M_WIFI_DISCONNECTED)
   {
-    if (WIFI8_OK != wifi8_connect(&wifi8, MAIN_WLAN_SSID, sizeof(MAIN_WLAN_SSID),
-                                  MAIN_WLAN_AUTH, MAIN_WLAN_PSK, M2M_WIFI_CH_ALL))
+    if (WIFI8_OK != wifi8_start_ap(&wifi8, &ap_config))
     {
-      printf("Connection error\n");
+      printf("Error starting access point\n");
       for (;;)
         ;
     }
     else
     {
-      printf("Connecting...\n");
+      printf("Opening access point...\n");
     }
   }
-
-  while (wifi_connected != M2M_WIFI_CONNECTED)
-  {
-    wifi8_handle_events(&wifi8);
-  }
-
-  printf("Connected\n");
 
   wifi8_socket_init(&wifi8);
   addr.sin_family = 2;
@@ -167,11 +175,10 @@ int main(void)
 
   // led indicates when server is running and ready to accept connections
   PORT_REGS->GROUP[0].PORT_OUTCLR = PORT_PA14;
-  printf("main: starting server\n");
+  printf("main: established connection\n");
 
   while (1)
   {
-
     wifi8_handle_events(&wifi8);
 
     if (tcp_server_socket < 0)
@@ -191,74 +198,21 @@ int main(void)
   return 0;
 }
 
-static void wifi_cb(uint8_t u8_msg_type, void *pv_msg)
+static void ap_wifi_cb(uint8_t u8_msg_type, void *pv_msg)
 {
   switch (u8_msg_type)
   {
-  case M2M_WIFI_RESP_SCAN_DONE:
-  {
-    wifi8_m2m_scan_done_t *pstr_info = (wifi8_m2m_scan_done_t *)pv_msg;
-    scan_request_index = 0;
-    if (pstr_info->u8_numof_ch >= 1)
-    {
-      wifi8_req_scan_result(&wifi8, scan_request_index);
-      scan_request_index++;
-    }
-    else
-    {
-      wifi8_request_scan(&wifi8, M2M_WIFI_CH_ALL);
-    }
-
-    break;
-  }
-  case M2M_WIFI_RESP_SCAN_RESULT:
-  {
-    wifi8_m2m_wifiscan_result_t *pstr_scan_result = (wifi8_m2m_wifiscan_result_t *)pv_msg;
-    uint16_t demo_ssid_len;
-    uint16_t scan_ssid_len = strlen((char *)pstr_scan_result->au8ssid);
-
-    printf("wifi_cb: [%d] SSID:%s\r\n", (uint16_t)scan_request_index, pstr_scan_result->au8ssid);
-
-    num_found_ap = wifi8.ch_num;
-    if (scan_ssid_len)
-    {
-      demo_ssid_len = strlen((const char *)MAIN_WLAN_SSID);
-      if ((demo_ssid_len == scan_ssid_len) &&
-          (!memcmp(pstr_scan_result->au8ssid, (uint8_t *)MAIN_WLAN_SSID, demo_ssid_len)))
-      {
-        printf("wifi_cb: found %s \r\n", MAIN_WLAN_SSID);
-        wifi8_connect(&wifi8, MAIN_WLAN_SSID, sizeof(MAIN_WLAN_SSID),
-                      M2M_WIFI_SEC_WPA_PSK, MAIN_WLAN_PSK, M2M_WIFI_CH_ALL);
-        break;
-      }
-    }
-
-    if (scan_request_index < num_found_ap)
-    {
-      wifi8_req_scan_result(&wifi8, scan_request_index);
-      scan_request_index++;
-    }
-    else
-    {
-      printf("wifi_cb: can not find AP %s\r\n", MAIN_WLAN_SSID);
-      wifi8_request_scan(&wifi8, M2M_WIFI_CH_ALL);
-    }
-
-    break;
-  }
   case M2M_WIFI_RESP_CON_STATE_CHANGED:
   {
     wifi8_m2m_wifi_state_changed_t *pstr_wifi_state = (wifi8_m2m_wifi_state_changed_t *)pv_msg;
+
     if (pstr_wifi_state->u8_curr_state == M2M_WIFI_CONNECTED)
     {
-      printf("wifi_cb: connected\r\n");
+      printf("wifi_cb: a new device has connected.\r\n");
     }
     else if (pstr_wifi_state->u8_curr_state == M2M_WIFI_DISCONNECTED)
     {
-      printf("wifi_cb: disconnected\r\n");
-      wifi_connected = M2M_WIFI_DISCONNECTED;
-
-      wifi8_request_scan(&wifi8, M2M_WIFI_CH_ALL);
+      printf("wifi_cb: a device has disconnected.\r\n");
     }
 
     break;
@@ -270,8 +224,6 @@ static void wifi_cb(uint8_t u8_msg_type, void *pv_msg)
     printf("wifi_cb: IP: %u.%u.%u.%u\r\n",
            (uint16_t)pu8ip_address[0], (uint16_t)pu8ip_address[1],
            (uint16_t)pu8ip_address[2], (uint16_t)pu8ip_address[3]);
-
-    wifi_connected = M2M_WIFI_CONNECTED;
     break;
   }
   default:
@@ -290,13 +242,13 @@ static void socket_cb(int8_t sock, uint8_t u8_msg, void *pv_msg)
     wifi8_socket_bind_msg_t *pstr_bind = (wifi8_socket_bind_msg_t *)pv_msg;
     if (pstr_bind && pstr_bind->status == 0)
     {
-      printf("socket_cb: bind success!\r\n");
+      // log_printf(&logger, "socket_cb: bind success!\r\n");
       delay_ms(500);
       wifi8_socket_listen(&wifi8, tcp_server_socket, 0);
     }
     else
     {
-      printf("socket_cb: bind error!\r\n");
+      // log_printf(&logger, "socket_cb: bind error!\r\n");
       wifi8_socket_close(&wifi8, tcp_server_socket);
       tcp_server_socket = -1;
     }
@@ -307,11 +259,11 @@ static void socket_cb(int8_t sock, uint8_t u8_msg, void *pv_msg)
     wifi8_socket_listen_msg_t *pstr_listen = (wifi8_socket_listen_msg_t *)pv_msg;
     if (pstr_listen && pstr_listen->status == 0)
     {
-      printf("socket_cb: listen success!\r\n");
+      // log_printf(&logger, "socket_cb: listen success!\r\n");
     }
     else
     {
-      printf("socket_cb: listen error!\r\n");
+      // log_printf(&logger, "socket_cb: listen error!\r\n");
       wifi8_socket_close(&wifi8, tcp_server_socket);
       tcp_server_socket = -1;
     }
@@ -322,13 +274,13 @@ static void socket_cb(int8_t sock, uint8_t u8_msg, void *pv_msg)
     wifi8_socket_accept_msg_t *pstr_accept = (wifi8_socket_accept_msg_t *)pv_msg;
     if (pstr_accept)
     {
-      printf("socket_cb: accept success!\r\n");
+      // log_printf(&logger, "socket_cb: accept success!\r\n");
       tcp_client_socket = pstr_accept->sock;
       wifi8_socket_receive(&wifi8, tcp_client_socket, gau8_socket_test_buffer, sizeof(gau8_socket_test_buffer), 0);
     }
     else
     {
-      printf("socket_cb: accept error!\r\n");
+      // log_printf(&logger, "socket_cb: accept error!\r\n");
       wifi8_socket_close(&wifi8, tcp_server_socket);
       tcp_server_socket = -1;
     }
@@ -336,7 +288,7 @@ static void socket_cb(int8_t sock, uint8_t u8_msg, void *pv_msg)
   break;
   case SOCKET_MSG_SEND:
   {
-    printf("socket_cb: send success!\r\n");
+    // log_printf(&logger, "socket_cb: send success!\r\n");
     wifi8_socket_receive(&wifi8, tcp_client_socket, gau8_socket_test_buffer, sizeof(gau8_socket_test_buffer), 0);
   }
   break;
@@ -345,7 +297,7 @@ static void socket_cb(int8_t sock, uint8_t u8_msg, void *pv_msg)
     wifi8_socket_recv_msg_t *pstr_recv = (wifi8_socket_recv_msg_t *)pv_msg;
     if (pstr_recv && pstr_recv->s16_buffer_size > 0)
     {
-      printf("%s", pstr_recv->pu8_buffer);
+      // log_printf(&logger, "%s", pstr_recv->pu8_buffer);
       if ((strchr(pstr_recv->pu8_buffer, 13) != 0) || (strchr(pstr_recv->pu8_buffer, 10) != 0))
       {
         wifi8_socket_send(&wifi8, tcp_client_socket, &msg_wifi_product, sizeof(t_msg_wifi_product));
@@ -358,7 +310,7 @@ static void socket_cb(int8_t sock, uint8_t u8_msg, void *pv_msg)
     }
     else
     {
-      printf("socket_cb: close socket!\r\n");
+      // log_printf(&logger, "socket_cb: close socket!\r\n");
       wifi8_socket_close(&wifi8, tcp_server_socket);
       tcp_server_socket = -1;
     }
