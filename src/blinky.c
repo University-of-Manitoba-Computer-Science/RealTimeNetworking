@@ -6,44 +6,10 @@
 #include <string.h>
 #include <assert.h>
 
-#define EXTINT15_MASK 0x8000
-
-void buttonInit()
-{
-  // switch input on PA15, processed as an external interrupt
-  PORT_REGS->GROUP[0].PORT_DIRCLR = PORT_PA15;
-  PORT_REGS->GROUP[0].PORT_PINCFG[15] |= PORT_PINCFG_PMUXEN_Msk;
-  PORT_REGS->GROUP[0].PORT_PMUX[7] |= PORT_PMUX_PMUXO_A;
-
-  PORT_REGS->GROUP[0].PORT_OUTSET = PORT_PA15;
-  PORT_REGS->GROUP[0].PORT_PINCFG[15] |= PORT_PINCFG_PULLEN_Msk;
-
-  // have to enable the interrupt line in the system level REG
-  NVIC_EnableIRQ(EIC_EXTINT_15_IRQn);
-
-  MCLK_REGS->MCLK_APBAMASK |= MCLK_APBAMASK_EIC_Msk;
-
-  // the button is noisy so we keep it slow and lots of samples for filtering -- not great but it does the job (usually)
-  EIC_REGS->EIC_CONFIG[1] |= ((uint32_t)(EXTINT15_MASK) << 16) | EIC_CONFIG_SENSE7_RISE;
-  EIC_REGS->EIC_DEBOUNCEN |= EXTINT15_MASK;
-  EIC_REGS->EIC_DPRESCALER |= EIC_DPRESCALER_TICKON_Msk | EIC_DPRESCALER_STATES1_Msk | EIC_DPRESCALER_PRESCALER1_DIV64;
-  EIC_REGS->EIC_INTENSET |= EXTINT15_MASK;
-  EIC_REGS->EIC_CTRLA |= EIC_CTRLA_CKSEL_CLK_ULP32K | EIC_CTRLA_ENABLE_Msk;
-}
-
-// button press handler
-void EIC_EXTINT_15_Handler()
-{
-  EIC_REGS->EIC_INTFLAG |= EXTINT15_MASK;
-}
-
 uint8_t count = 0;
 
 /** Wi-Fi Settings */
-#define MAIN_WLAN_SSID "Breton"             /**< Destination SSID */
-#define MAIN_WLAN_AUTH M2M_WIFI_SEC_WPA_PSK /**< Security type */
-#define MAIN_WLAN_PSK "Pepper2332"          /**< Password for Destination SSID */
-#define MAIN_TCP_SERVER_PORT 8080           /**< TCP Server port for client connection */
+#define MAIN_TCP_SERVER_PORT 8080 /**< TCP Server port for client connection */
 
 typedef struct s_msg_wifi_product
 {
@@ -57,19 +23,11 @@ static t_msg_wifi_product msg_wifi_product =
 
 static uint8_t gau8_socket_test_buffer[1024] = {0};
 
-static uint32_t buffer_cursor = 0;
-static uint8_t buffer[1024] = {0};
-
 static int8_t tcp_server_socket = -1;
 static int8_t tcp_client_socket = -1;
 wifi8_sockaddr_in_t addr;
 
-static uint8_t wifi_connected;
 static uint8_t ap_status;
-
-static uint8_t scan_request_index = 0;
-
-static uint8_t num_found_ap = 0;
 
 static void ap_wifi_cb(uint8_t u8_msg_type, void *pv_msg);
 static void socket_cb(int8_t sock, uint8_t u8_msg, void *pv_msg);
@@ -90,7 +48,6 @@ int main(void)
   PM_REGS->PM_SLEEPCFG |= PM_SLEEPCFG_SLEEPMODE_IDLE;
 
   heartInit();
-  buttonInit();
 
   // we want interrupts!
   __enable_irq();
@@ -115,7 +72,6 @@ int main(void)
   }
   printf("wifi chip initialization completed.\n");
 
-  wifi_connected = M2M_WIFI_DISCONNECTED;
   wifi8.app_wifi_cb = ap_wifi_cb;
   wifi8.app_socket_cb = socket_cb;
   ap_status = M2M_WIFI_DISCONNECTED;
@@ -235,6 +191,13 @@ static void ap_wifi_cb(uint8_t u8_msg_type, void *pv_msg)
 
 static void socket_cb(int8_t sock, uint8_t u8_msg, void *pv_msg)
 {
+  if (tcp_server_socket < 0)
+  {
+    return;
+  }
+
+  printf("msg: %d, sock: %d, server: %d, client: %d\n", u8_msg, sock, tcp_server_socket, tcp_client_socket);
+
   switch (u8_msg)
   {
   case SOCKET_MSG_BIND:
@@ -244,11 +207,11 @@ static void socket_cb(int8_t sock, uint8_t u8_msg, void *pv_msg)
     {
       // log_printf(&logger, "socket_cb: bind success!\r\n");
       delay_ms(500);
-      wifi8_socket_listen(&wifi8, tcp_server_socket, 0);
+      wifi8_socket_listen(&wifi8, sock, 0);
     }
     else
     {
-      // log_printf(&logger, "socket_cb: bind error!\r\n");
+      printf("socket_cb: bind error!\r\n");
       wifi8_socket_close(&wifi8, tcp_server_socket);
       tcp_server_socket = -1;
     }
@@ -263,7 +226,7 @@ static void socket_cb(int8_t sock, uint8_t u8_msg, void *pv_msg)
     }
     else
     {
-      // log_printf(&logger, "socket_cb: listen error!\r\n");
+      printf("socket_cb: listen error!\r\n");
       wifi8_socket_close(&wifi8, tcp_server_socket);
       tcp_server_socket = -1;
     }
@@ -274,13 +237,18 @@ static void socket_cb(int8_t sock, uint8_t u8_msg, void *pv_msg)
     wifi8_socket_accept_msg_t *pstr_accept = (wifi8_socket_accept_msg_t *)pv_msg;
     if (pstr_accept)
     {
+      printf("socket_cb: accept. sock = %d, addr = %x:%d\r\n",
+             pstr_accept->sock,
+             pstr_accept->str_addr.sin_addr.s_addr,
+             pstr_accept->str_addr.sin_port);
+
       // log_printf(&logger, "socket_cb: accept success!\r\n");
       tcp_client_socket = pstr_accept->sock;
-      wifi8_socket_receive(&wifi8, tcp_client_socket, gau8_socket_test_buffer, sizeof(gau8_socket_test_buffer), 0);
+      wifi8_socket_receive(&wifi8, pstr_accept->sock, gau8_socket_test_buffer, sizeof(gau8_socket_test_buffer), 5000);
     }
     else
     {
-      // log_printf(&logger, "socket_cb: accept error!\r\n");
+      printf("socket_cb: accept error!\r\n");
       wifi8_socket_close(&wifi8, tcp_server_socket);
       tcp_server_socket = -1;
     }
@@ -288,8 +256,7 @@ static void socket_cb(int8_t sock, uint8_t u8_msg, void *pv_msg)
   break;
   case SOCKET_MSG_SEND:
   {
-    // log_printf(&logger, "socket_cb: send success!\r\n");
-    wifi8_socket_receive(&wifi8, tcp_client_socket, gau8_socket_test_buffer, sizeof(gau8_socket_test_buffer), 0);
+    wifi8_socket_receive(&wifi8, sock, gau8_socket_test_buffer, sizeof(gau8_socket_test_buffer), 5000);
   }
   break;
   case SOCKET_MSG_RECV:
@@ -298,21 +265,23 @@ static void socket_cb(int8_t sock, uint8_t u8_msg, void *pv_msg)
     if (pstr_recv && pstr_recv->s16_buffer_size > 0)
     {
       // log_printf(&logger, "%s", pstr_recv->pu8_buffer);
+      printf("%s", pstr_recv->pu8_buffer);
       if ((strchr(pstr_recv->pu8_buffer, 13) != 0) || (strchr(pstr_recv->pu8_buffer, 10) != 0))
       {
-        wifi8_socket_send(&wifi8, tcp_client_socket, &msg_wifi_product, sizeof(t_msg_wifi_product));
+        wifi8_socket_send(&wifi8, sock, &msg_wifi_product, sizeof(t_msg_wifi_product));
       }
       else
       {
-        wifi8_socket_receive(&wifi8, tcp_client_socket, gau8_socket_test_buffer, sizeof(gau8_socket_test_buffer), 0);
+        wifi8_socket_receive(&wifi8, sock, gau8_socket_test_buffer, sizeof(gau8_socket_test_buffer), 5000);
       }
       memset(pstr_recv->pu8_buffer, 0, pstr_recv->s16_buffer_size);
     }
     else
     {
       // log_printf(&logger, "socket_cb: close socket!\r\n");
-      wifi8_socket_close(&wifi8, tcp_server_socket);
-      tcp_server_socket = -1;
+      printf("socket_cb: recv error!\r\n");
+      wifi8_socket_close(&wifi8, tcp_client_socket);
+      tcp_client_socket = -1;
     }
   }
   break;
