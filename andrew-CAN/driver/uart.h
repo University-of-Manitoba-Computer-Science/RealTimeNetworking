@@ -13,5 +13,5 @@ void clkUART();
 void initUART();
 void portUART();
 
-void txUART(uint8_t data);
-uint8_t rxUART();
+void txUART(sercom_registers_t*, uint8_t data);
+uint8_t rxUART(sercom_registers_t*);

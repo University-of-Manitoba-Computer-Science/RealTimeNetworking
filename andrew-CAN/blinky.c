@@ -189,7 +189,7 @@ int main(void){
     __WFI();
 
     if ((msCount % LED_FLASH_MS) == 0){
-      txUART(secCount);
+      txUART(SERCOM0_REGS ,secCount);
       secCount = secCount + 1;
       PORT_REGS->GROUP[0].PORT_OUTTGL = PORT_PA14;
       #ifndef NDEBUG

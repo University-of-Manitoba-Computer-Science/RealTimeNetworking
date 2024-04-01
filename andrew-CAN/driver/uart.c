@@ -9,11 +9,18 @@ void clkUART(){
     //I want the UART on an 8mhz clock for maybe uneducated reasons (I want it to get 1mbps transmit speed)
     GCLK_REGS->GCLK_GENCTRL[4] = GCLK_GENCTRL_DIV(3) | GCLK_GENCTRL_SRC_DFLL | GCLK_GENCTRL_GENEN_Msk;
 	GCLK_REGS->GCLK_PCHCTRL[SERCOM0_GCLK_ID_CORE] = GCLK_PCHCTRL_GEN_GCLK4 | GCLK_PCHCTRL_CHEN_Msk;
+
 	while((GCLK_REGS->GCLK_PCHCTRL[SERCOM0_GCLK_ID_CORE] & GCLK_PCHCTRL_CHEN_Msk) != GCLK_PCHCTRL_CHEN_Msk){
 		//wait for sync
 	}//while	
 
-    MCLK_REGS->MCLK_APBAMASK |= MCLK_APBAMASK_SERCOM0_Msk;
+    GCLK_REGS->GCLK_PCHCTRL[SERCOM5_GCLK_ID_CORE] = GCLK_PCHCTRL_GEN_GCLK4 | GCLK_PCHCTRL_CHEN_Msk;
+    while((GCLK_REGS->GCLK_PCHCTRL[SERCOM5_GCLK_ID_CORE] & GCLK_PCHCTRL_CHEN_Msk) != GCLK_PCHCTRL_CHEN_Msk){
+		//wait for sync
+	}//while	
+
+    MCLK_REGS->MCLK_APBAMASK |= MCLK_APBAMASK_SERCOM0_Msk
+    MCLK_REGS->MCLK_APBDMASK |= MCLK_APBDMASK_SERCOM5_Msk;
 
 }
 void initUART(){
@@ -21,7 +28,7 @@ void initUART(){
     //The following comes from section 34.6.2.1
     //disable the USART sercom
     SERCOM0_REGS->USART_INT.SERCOM_CTRLA = SERCOM_USART_INT_CTRLA_ENABLE(0);
-    
+    SERCOM5_REGS->USART_INT.SERCOM_CTRLA = SERCOM_USART_INT_CTRLA_ENABLE(0);  
 
     //todo: I have changed how TXP0 works along with RXP0 to select PAD1 for RX as per the spec, but I need to make sure the TXP0 mode change from 0x0 to 0x2 works
     //The following sets up CTRLA as follows
@@ -33,9 +40,15 @@ void initUART(){
     while((SERCOM0_REGS->USART_INT.SERCOM_SYNCBUSY & SERCOM_USART_INT_SYNCBUSY_CTRLB_Msk) != 0){
         //Wait for CTRLB enable
     }
+    SERCOM5_REGS->USART_INT.SERCOM_CTRLB = SERCOM_USART_INT_CTRLB_CHSIZE_8_BIT | SERCOM_USART_INT_CTRLB_SBMODE_1_BIT | SERCOM_USART_INT_CTRLB_TXEN_Msk | SERCOM_USART_INT_CTRLB_RXEN_Msk;
+    while((SERCOM5_REGS->USART_INT.SERCOM_SYNCBUSY & SERCOM_USART_INT_SYNCBUSY_CTRLB_Msk) != 0){
+        //Wait for CTRLB enable
+    }
 
     //Since we are using internal clock we can set desired baud rate with our 8Mhz clock (gclk4)
     SERCOM0_REGS->USART_INT.SERCOM_BAUD = SERCOM_USART_INT_BAUD_BAUD(UART_BUAD);
+    SERCOM5_REGS->USART_INT.SERCOM_BAUD = SERCOM_USART_INT_BAUD_BAUD(UART_BUAD);
+
     //enable transmit and receive
     
 
@@ -44,33 +57,45 @@ void initUART(){
     while((SERCOM0_REGS->USART_INT.SERCOM_SYNCBUSY & SERCOM_USART_INT_SYNCBUSY_ENABLE_Msk) != 0){
         //Wait for enable
     }
+    SERCOM5_REGS->USART_INT.SERCOM_CTRLA = SERCOM_USART_INT_CTRLA_MODE_USART_INT_CLK |  SERCOM_USART_INT_CTRLA_RXPO(0X0) | SERCOM_USART_INT_CTRLA_TXPO(TX_MODE) | SERCOM_USART_INT_CTRLA_DORD_Msk | SERCOM_USART_INT_CTRLA_ENABLE_Msk;
+    while((SERCOM5_REGS->USART_INT.SERCOM_SYNCBUSY & SERCOM_USART_INT_SYNCBUSY_ENABLE_Msk) != 0){
+        //Wait for enable
+    }
 }
 void portUART(){
     
-    //USART sercom0 on PORY_PA8
+    //USART sercom0 on PORT_PA8
     PORT_REGS->GROUP[0].PORT_PINCFG[8] |= PORT_PINCFG_PMUXEN_Msk;
     PORT_REGS->GROUP[0].PORT_PMUX[4] |= PORT_PMUX_PMUXE_C;
 
- //USART sercom0 on PORY_PA9
+ //USART sercom0 on PORT_PA9
     PORT_REGS->GROUP[0].PORT_PINCFG[9] |= PORT_PINCFG_PMUXEN_Msk;
     PORT_REGS->GROUP[0].PORT_PMUX[4] |= PORT_PMUX_PMUXO_C;
 
+//USART sercom5 on PORT_PB02
+    PORT_REGS->GROUP[1].PORT_PINCFG[2] |= PORT_PINCFG_PMUXEN_Msk;
+    PORT_REGS->GROUP[1].PORT_PMUX[1] |= PORT_PMUX_PMUXE_D;
+
+ //USART sercom5 on PORT_PB31
+    PORT_REGS->GROUP[1].PORT_PINCFG[31] |= PORT_PINCFG_PMUXEN_Msk;
+    PORT_REGS->GROUP[1].PORT_PMUX[15] |= PORT_PMUX_PMUXO_D;
+
 }
 
-void txUART(uint8_t data){
+void txUART(sercom_registers_t* sercom, uint8_t data){
 
-    while((SERCOM0_REGS->USART_INT.SERCOM_INTFLAG & SERCOM_USART_INT_INTFLAG_DRE_Msk) == 0U ){
+    while((sercom->USART_INT.SERCOM_INTFLAG & SERCOM_USART_INT_INTFLAG_DRE_Msk) == 0U ){
         //WAIT for clear int flag
 
     }
 
-    SERCOM0_REGS->USART_INT.SERCOM_DATA = (uint16_t)data;
+    sercom->USART_INT.SERCOM_DATA = (uint16_t)data;
 
 
 }
 
-uint8_t rxUART(){
+uint8_t rxUART(sercom_registers_t* sercom){
 
-    return SERCOM0_REGS->USART_INT.SERCOM_DATA;
+    return sercom->USART_INT.SERCOM_DATA;
 
 }
