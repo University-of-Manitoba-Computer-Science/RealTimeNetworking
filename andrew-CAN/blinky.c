@@ -190,10 +190,21 @@ int main(void){
 
     if ((msCount % LED_FLASH_MS) == 0){
       txUART(SERCOM0_REGS ,secCount);
-      txUART(SERCOM5_REGS ,secCount);
+      uint32_t timestamp = 1;
+      while((timestamp % TX_DELAY_MS) != 0 ){
+        timestamp ++;
+      }
+      rxMode(SERCOM0_REGS);
       secCount = secCount + 1;
       PORT_REGS->GROUP[0].PORT_OUTTGL = PORT_PA14;
-      //PORT_REGS->GROUP[1].PORT_OUTTGL = PORT_PB22;
+      #ifndef NDEBUG
+        dbg_write_u32(&secCount,1);
+      #endif
+     
+    }
+    if ((msCount % LED_FLASH_MS) == 2){
+      rxUART(SERCOM4_REGS);
+      secCount = secCount + 1;
       #ifndef NDEBUG
         dbg_write_u32(&secCount,1);
       #endif
