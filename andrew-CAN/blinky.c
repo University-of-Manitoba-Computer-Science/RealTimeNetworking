@@ -190,8 +190,10 @@ int main(void){
 
     if ((msCount % LED_FLASH_MS) == 0){
       txUART(SERCOM0_REGS ,secCount);
+      txUART(SERCOM5_REGS ,secCount);
       secCount = secCount + 1;
       PORT_REGS->GROUP[0].PORT_OUTTGL = PORT_PA14;
+      //PORT_REGS->GROUP[1].PORT_OUTTGL = PORT_PB22;
       #ifndef NDEBUG
         dbg_write_u32(&secCount,1);
       #endif

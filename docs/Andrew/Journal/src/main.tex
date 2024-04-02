@@ -86,7 +86,9 @@ We quickly tinkered with this and discussed our values we were seeing. After thi
 \paragraph{MARCH 27} I met with Michael today and he put me on the right track. We discussed my initialization and everything was more or less okay. My buad rate was uneducated and wrong as my clock was wrong. I did more educated coding and fixed the clocks but did not have time to test much after that. 
 \paragraph{MARCH 28} I have calculated a new baud rate based on a 16MHZ clock which cancels out everything nicely. I have also set gen clock 0 back down to 2mhz correctly and clock4 is at the 16mhz for my uart. I am now going to set up my second SERCOM and then get the enable bits on the RS485 setup. My UART controller is now working. I will get my second secom working but I now have a dev board so I may need to change which sercom I am using. 
 \paragraph{MARCH 31} Quick little update, I turned on SERCOM5 and changed my tx and rx code to take a sercom\_registers\_t pointer so I can define any old SERCOMn\_REGS (ie call SEROM0/5 depending on which I want). I just wanted to get this done late sunday night after working on my other project just so I can test this tomorrow evening so I can have everything ready to demo. I need to code 4 ports to send the correct signal to the RS485 pins to send and receive.  
-
+\section{APRIL}
+\subsection{APRIL 1 - 7TH}
+\paragraph{April 1} I tsted my late night implementation. There were some hardware bugs. Apparently I cannot read (data analyzer) the UART tx while I send it somewhere else. I am having issues setting the ports for my RE/DE without breaking everything. More debugging required. 
 \include{CAN}
 \includepdf[]{MeetingMinutes/Jan31/Jan31.pdf}
 \include{RS485}
