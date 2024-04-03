@@ -6,26 +6,10 @@
 #include <string.h>
 #include <assert.h>
 
-uint8_t count = 0;
-
-/** Wi-Fi Settings */
-#define MAIN_TCP_SERVER_PORT 8080 /**< TCP Server port for client connection */
-
-typedef struct s_msg_wifi_product
-{
-  uint8_t name[30];
-
-} t_msg_wifi_product;
-
-static t_msg_wifi_product msg_wifi_product =
-    {
-        .name = "WiFi 8 Click"};
-
-static char http_response[] = "HTTP/1.1 200 OK\r\n"
-                              "Content-Type: text/html\r\n"
-                              "Content-Length: 11\r\n"
-                              "\r\n"
-                              "Hello World";
+#define MAIN_TCP_SERVER_PORT 8080
+#define MAX_RESPONSE_SIZE 4096
+#define MAX_RESPONSE_ITEM_SIZE 128
+#define MAX_RESPONSE_ITEMS 32
 
 static uint8_t gau8_socket_test_buffer[1024] = {0};
 
@@ -39,6 +23,10 @@ static void ap_wifi_cb(uint8_t u8_msg_type, void *pv_msg);
 static void socket_cb(int8_t sock, uint8_t u8_msg, void *pv_msg);
 
 static wifi8_t wifi8;
+
+uint8_t get_http_response(char *response);
+void add_to_response(char *str, uint32_t len);
+void clear_response();
 
 int main(void)
 {
@@ -250,7 +238,11 @@ static void socket_cb(int8_t sock, uint8_t u8_msg, void *pv_msg)
 
       // log_printf(&logger, "socket_cb: accept success!\r\n");
       tcp_client_socket = pstr_accept->sock;
-      wifi8_socket_send(&wifi8, tcp_client_socket, http_response, sizeof(http_response));
+
+      char http_response[MAX_RESPONSE_SIZE];
+      uint32_t response_size = get_http_response(http_response);
+      wifi8_socket_send(&wifi8, tcp_client_socket, http_response, response_size);
+
       uint8_t result = wifi8_socket_receive(&wifi8, pstr_accept->sock, gau8_socket_test_buffer, sizeof(gau8_socket_test_buffer), 5000);
       if (result != WIFI8_OK)
       {
@@ -281,7 +273,9 @@ static void socket_cb(int8_t sock, uint8_t u8_msg, void *pv_msg)
       printf("%s", pstr_recv->pu8_buffer);
       if ((strchr(pstr_recv->pu8_buffer, 13) != 0) || (strchr(pstr_recv->pu8_buffer, 10) != 0))
       {
-        wifi8_socket_send(&wifi8, sock, http_response, sizeof(http_response));
+        char http_response[MAX_RESPONSE_SIZE];
+        uint32_t response_size = get_http_response(http_response);
+        wifi8_socket_send(&wifi8, sock, http_response, response_size);
       }
       else
       {
@@ -303,4 +297,52 @@ static void socket_cb(int8_t sock, uint8_t u8_msg, void *pv_msg)
     break;
   }
   }
+}
+
+static char response_items[MAX_RESPONSE_ITEMS][MAX_RESPONSE_ITEM_SIZE];
+static uint8_t response_item_count = 0;
+static uint8_t start_item_idx = 0;
+void add_to_response(char *str, uint32_t len)
+{
+  if (response_item_count >= MAX_RESPONSE_ITEMS)
+  {
+    strncpy(response_items[start_item_idx], str, MAX_RESPONSE_ITEM_SIZE - 1);
+    start_item_idx = (start_item_idx + 1) % MAX_RESPONSE_ITEMS;
+  }
+  else
+  {
+    strncpy(response_items[response_item_count], str, MAX_RESPONSE_ITEM_SIZE - 1);
+    response_item_count++;
+  }
+}
+
+uint8_t get_http_response(char *response)
+{
+  char *http_header = "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nConnection: close\r\n\r\n[";
+
+  strncpy(response, http_header, MAX_RESPONSE_ITEM_SIZE - 1);
+
+  for (uint8_t i = 0; i < response_item_count; i++)
+  {
+    strncat(response, "\"", MAX_RESPONSE_ITEM_SIZE - 1);
+    strncat(response, response_items[(start_item_idx + i) % MAX_RESPONSE_ITEMS], MAX_RESPONSE_ITEM_SIZE - 1);
+    strncat(response, "\"", MAX_RESPONSE_ITEM_SIZE - 1);
+    if (i < response_item_count - 1)
+    {
+      strncat(response, ",", MAX_RESPONSE_ITEM_SIZE - 1);
+    }
+    else
+    {
+      strncat(response, "]", MAX_RESPONSE_ITEM_SIZE - 1);
+    }
+  }
+
+  return strlen(response);
+}
+
+void clear_response()
+{
+  response_item_count = 0;
+  start_item_idx = 0;
+  memset(response_items, 0, sizeof(response_items));
 }

@@ -83,3 +83,7 @@ I got Andrew's Mikroe Base Board from Jacob earlier this week and everything wor
 # March 27 2024
 
 So, I decided that the board was dumb so I will fight dumb with dumber. Since the ATWIN was hang-ing on proper HTTP requests, I am now sending a blob of HTTP everytime a TCP connection is accepted. It works. It's disgusting, but it works.
+
+# March 28 2024
+
+Andrew needed the Click Base Board back and WiFi is working! I'm not following the TCP spec properly, but I think there is more configuration that needs to happen on the ATWINC chip in order to be able to recieve HTTP requests properly, so I am replying to all TCP requests with the HTTP response. This means we can only serve one single response to the board, but that's all we need to be able to communicate with an API. I setup functions for Andrew and Jacob to use to append data to the buffer being shared over HTTP and we should now be able to pull data from whatever they send it!
