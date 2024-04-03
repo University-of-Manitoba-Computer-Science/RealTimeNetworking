@@ -88,7 +88,15 @@ We quickly tinkered with this and discussed our values we were seeing. After thi
 \paragraph{MARCH 31} Quick little update, I turned on SERCOM5 and changed my tx and rx code to take a sercom\_registers\_t pointer so I can define any old SERCOMn\_REGS (ie call SEROM0/5 depending on which I want). I just wanted to get this done late sunday night after working on my other project just so I can test this tomorrow evening so I can have everything ready to demo. I need to code 4 ports to send the correct signal to the RS485 pins to send and receive.  
 \section{APRIL}
 \subsection{APRIL 1 - 7TH}
-\paragraph{April 1} I tsted my late night implementation. There were some hardware bugs. Apparently I cannot read (data analyzer) the UART tx while I send it somewhere else. I am having issues setting the ports for my RE/DE without breaking everything. More debugging required. I took a break and realised most of my problems were problem silly usb power issues. So I quickly moved over my code to make it so I can use it for the Curiosity Nano Base for Click Boards and changed my SERCOM5 to SERCOM4 for PAD1 of the base (tx1 rx1) and then SERCOM0 for PAD2 (tx2 rx2). I then added the pins for the RS485 6 click so for PAD 1 DE maps to INT1 (PA04) and RE to CS1 (PA18) then PAD 2 maps DE to INT2 (PB14) and CS2(PB05). I now set both RE and DE high when transmitting and low when in receiving mode (defaults). I have a 2000 ms wait after sending a tx as in the sample code. I am not sure how to test aside from debug. 
+\paragraph{April 1} I tested my late night implementation. There were some hardware bugs. Apparently I cannot read (data analyzer) the UART tx while I send it somewhere else. I am having issues setting the ports for my RE/DE without breaking everything. More debugging required. I took a break and realised most of my problems were problem silly usb power issues. So I quickly moved over my code to make it so I can use it for the Curiosity Nano Base for Click Boards and changed my SERCOM5 to SERCOM4 for PAD1 of the base (tx1 rx1) and then SERCOM0 for PAD2 (tx2 rx2). I then added the pins for the RS485 6 click so for PAD 1 DE maps to INT1 (PA04) and RE to CS1 (PA18) then PAD 2 maps DE to INT2 (PB14) and CS2(PB05). I now set both RE and DE high when transmitting and low when in receiving mode (defaults). I have a 2000 ms wait after sending a tx as in the sample code. I am not sure how to test aside from debug. 
+\paragraph{April 2} I had some silly bugs I had debugged today. Messed up my sercom ports...oopsies. This click dev board is huge for not running into silly power issues. 
+\begin{figure}
+    \centering
+    \includegraphics[width=0.5\linewidth]{RS485Debugg.png}
+    \caption{This is my debug output I send a tx and output the rx in debug}
+    \label{fig:enter-label}
+\end{figure}
+so I suppose that is it. I am ready to show I have that done at the meeting tomorrow. 
 \include{CAN}
 \includepdf[]{MeetingMinutes/Jan31/Jan31.pdf}
 \include{RS485}

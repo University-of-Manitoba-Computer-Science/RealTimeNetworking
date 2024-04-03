@@ -197,20 +197,17 @@ int main(void){
       rxMode(SERCOM0_REGS);
       secCount = secCount + 1;
       PORT_REGS->GROUP[0].PORT_OUTTGL = PORT_PA14;
-      #ifndef NDEBUG
+/*       #ifndef NDEBUG
         dbg_write_u32(&secCount,1);
       #endif
-     
-    }
-    if ((msCount % LED_FLASH_MS) == 2){
-      rxUART(SERCOM4_REGS);
-      secCount = secCount + 1;
+ */         
       #ifndef NDEBUG
-        dbg_write_u32(&secCount,1);
-      #endif
-     
+        rxMode(SERCOM4_REGS);
+        unsigned char rxCount = rxUART(SERCOM4_REGS);
+        dbg_write_u8(&rxCount,1);
+      #endif  
     }
-
+ 
   }
   return 0;
 }
