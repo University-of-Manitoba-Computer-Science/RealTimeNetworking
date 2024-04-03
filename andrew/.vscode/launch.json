@@ -8,7 +8,7 @@
       "name": "openOCD",
       "type": "cppdbg",
       "request": "launch",
-      "program": "${workspaceFolder}/blinky.elf",
+      "program": "${workspaceFolder}/sensor.elf",
       "cwd": "${workspaceFolder}",
       "MIMode": "gdb",
       "targetArchitecture": "arm",
@@ -17,7 +17,7 @@
       "miDebuggerPath": "arm-none-eabi-gdb",
       "setupCommands": [
         {
-          "text": "file ${workspaceFolder}/blinky.elf",
+          "text": "file ${workspaceFolder}/sensor.elf",
           "ignoreFailures": false
         },
         {
