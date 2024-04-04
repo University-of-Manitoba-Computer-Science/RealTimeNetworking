@@ -81,7 +81,7 @@ static int encode_dlc(int len)
     }
 }
 
-void canInit()
+void canInit(uint16_t *ids_to_keep, int num_ids_to_keep)
 {
     // setup TX port
     PORT_REGS->GROUP[1].PORT_DIRSET      = PORT_PB12;
@@ -117,14 +117,13 @@ void canInit()
     CAN1_REGS->CAN_CCCR |= CAN_CCCR_INIT_Msk; // start initialization
     CAN1_REGS->CAN_CCCR |= CAN_CCCR_CCE_Msk;  // enable configuration
 
-    // TODO remove once CAN driver is working over loopback
     // TODO this prevents the endless stream of TX
     CAN1_REGS->CAN_CCCR |= CAN_CCCR_TEST_Msk; // Enable test mode
     CAN1_REGS->CAN_TEST  = CAN_TEST_LBCK_Msk; // Enable loopback mode
 
-    // Accept non-matching standard frames in FIFO0
+    // Reject non-matching standard frames
     // Reject non-matching extended frames
-    CAN1_REGS->CAN_GFC |= CAN_GFC_ANFS(0) | CAN_GFC_ANFE(2);
+    CAN1_REGS->CAN_GFC |= CAN_GFC_ANFS(2) | CAN_GFC_ANFE(2);
 
     // Setting up message RAM
     uint32_t *addr = msg_ram;
@@ -150,7 +149,6 @@ void canInit()
     // RX Buffer RAM conf
     CAN1_REGS->CAN_RXBC  = CAN_RXBC_RBSA(addr);
     addr                += RX_BUFFER_SIZE * RX_BUFFER_ELEMENT_SIZE;
-    // TODO why isn't there an option to set the buffer size?
 
     // TX Event FIFO RAM conf
     CAN1_REGS->CAN_TXEFC =
@@ -168,9 +166,18 @@ void canInit()
     CAN1_REGS->CAN_CCCR &= ~CAN_CCCR_INIT_Msk;
 
     PORT_REGS->GROUP[0].PORT_OUTCLR = PORT_PA18;
+
+    // set up message filters
+    int offset = STD_FILT_OFFSET;
+    for (int i = 0; i < num_ids_to_keep; ++i) {
+        msg_ram[offset + i]  = 0;
+        msg_ram[offset + i] |= ids_to_keep[i];
+        msg_ram[offset + i] |= ids_to_keep[i] << 16;
+        msg_ram[offset + i] |= 1 << 27;
+    }
 }
 
-void queue_message(uint8_t *data, int len)
+void queue_message(uint16_t id, uint8_t *data, int len)
 {
     if ((CAN1_REGS->CAN_TXFQS & CAN_TXFQS_TFQF_Msk) == CAN_TXFQS_TFQF_Msk)
         return; // don't send message if the queue is full
@@ -180,12 +187,12 @@ void queue_message(uint8_t *data, int len)
 
     int offset        = TX_BUFFER_OFFSET + (index * TX_BUFFER_ELEMENT_SIZE);
     int dlc           = encode_dlc(len);
-    msg_ram[offset++] = STD_BUF_ID(DEVICE_CAN_ID);
+    msg_ram[offset++] = STD_BUF_ID(id);
     msg_ram[offset++] = MM_BUF(0) | DLC_BUF((uint32_t) dlc);
     memcpy(&msg_ram[offset], data, len);
 
     dbg_write_str("Sending: ");
-    dbg_write_u8(&index, len);
+    dbg_write_u8(data, len);
     dbg_write_char('\n');
 
     CAN1_REGS->CAN_TXBAR |= 1 << index;
@@ -222,5 +229,5 @@ int dequeue_message(uint8_t *data, int max_size)
     dbg_write_u32(&id, 1);
     dbg_write_char('\n');
 
-    return 0;
+    return len;
 }

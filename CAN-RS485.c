@@ -1,13 +1,12 @@
-#include <assert.h>
 #include <sam.h>
 
-#include "button.h"
 #include "can.h"
-#include "dcc_stdio.h"
 #include "heart.h"
+#include "uart.h"
 
-// number of millisecond between LED flashes
-#define LED_FLASH_MS 1000UL
+#define MAX_RX_DATA_LEN 16
+
+#define CAN_ID 0x200
 
 // NOTE: this overflows every ~50 days, so I'm not going to care here...
 volatile uint32_t msCount = 0;
@@ -18,25 +17,11 @@ void SysTick_Handler()
     msCount++;
 }
 
-// ISR for  external interrupt 15, add processing code as required...
-void EIC_EXTINT_15_Handler()
-{
-    // clear the interrupt! and go to the next operating mode
-    EIC_REGS->EIC_INTFLAG           |= EXTINT15_MASK;
-    PORT_REGS->GROUP[0].PORT_OUTTGL  = PORT_PA14;
-}
-
-// pull down tx and rx in interrupt
-
 int main(void)
 {
 #ifndef NDEBUG
     for (int i = 0; i < 100000; i++);
 #endif
-
-    // LED output
-    PORT_REGS->GROUP[0].PORT_DIRSET = PORT_PA14;
-    PORT_REGS->GROUP[0].PORT_OUTSET = PORT_PA14;
 
     // enable cache
     // tradeoff: +: really helps with repeated code/data (like when doing
@@ -51,25 +36,31 @@ int main(void)
     PM_REGS->PM_SLEEPCFG |= PM_SLEEPCFG_SLEEPMODE_IDLE;
 
     heartInit();
-    buttonInit();
-    canInit();
+    uint16_t tmp = CAN_ID + 1; // TODO choose ids to accept
+    canInit(&tmp, 1);
+    portUART();
+    clkUART();
+    initUART();
 
     // we want interrupts!
     __enable_irq();
 
-    uint8_t test = 0; // TODO remove this once we have actual data to send
-
     // sleep until we have an interrupt
     while (1) {
         __WFI();
-        if ((msCount % LED_FLASH_MS) == 0) {
-            uint8_t data[1] = {test++};
-            queue_message(data, 1);
+        if ((msCount % 1000) == 0) {
+            // check for waiting CAN data and send it over RS485
+            int can_len = 0;
+            while (can_len != -1) {
+                uint8_t rx_data[MAX_RX_DATA_LEN];
+                can_len = dequeue_message(rx_data, MAX_RX_DATA_LEN);
 
-            PORT_REGS->GROUP[0].PORT_OUTTGL = PORT_PA14;
+                if (can_len > 0) {
+                    txUARTArr(SERCOM0_REGS, rx_data, can_len);
+                }
+            }
 
-            uint8_t rx_data[16];
-            while ((dequeue_message(rx_data, 16)) != -1);
+            // TODO check for waiting RS485 data and send it over CAN
         }
     }
     return 0;
