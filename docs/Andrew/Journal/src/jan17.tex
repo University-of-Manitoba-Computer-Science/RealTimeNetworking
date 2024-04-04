@@ -1,0 +1,241 @@
+
+
+\begin{document}
+
+Logical 1 Recessive\\
+Logical 0 Dominant
+
+All nodes see transmissions
+
+ID arbitration:\\
+if they transmit a 1 and see 0 they quit and lose arbitration.
+
+The recessive message waits for the dominant message + 6-bit clocks then
+attempts again
+
+This means the first frame to transmit a 1 is the loser, thus highest
+priority id frame is all 0s followed by 00\ldots.001
+
+Using ID for the type of data, or the sending node ignores the fact ID is
+also used as message priority. This leads to poor real-time performance.
+CAN bus is limited to around 30\% to ensure deadlines if you don't build
+around the priority. Otherwise, you can achieve 70 to 80\% CAN bus usage and
+have reliable deadlines.
+
+Nominal Bit Time: Time it takes to send bit components:\\
+Sync
+
+Propagation
+
+Phase segment 1
+
+Phase segment 2
+
+Sync:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\item
+  Bus Idle -\textgreater{} wait for first recessive to dominant
+  transition
+\item
+  Hard synchronization
+\item
+  Resync occurs on every recessive to dominant transition during the
+  frame (message?)
+
+  \begin{enumerate}
+  \def\labelenumii{\alph{enumii}.}
+  \item
+    CAN controller expects this at multiple of nominal bit time.
+  \item
+    Else It adjust nominal bit time accordingly.
+  \end{enumerate}
+\end{enumerate}
+
+~
+
+Resync and Adjustment process:
+
+\begin{itemize}
+\item
+  Produce a number of quanta to divide the bits\textquotesingle{}
+  segments into time slices.
+
+  \begin{itemize}
+  \item
+    The number of quanta can vary based on the controller
+  \item
+    The quantity of quanta a segment is assigned can vary depending on
+    system needs
+  \end{itemize}
+\item
+  On out-of-sync (before or after) transition controller calculates the time
+  difference, to compensate:
+
+  \begin{itemize}
+  \item
+    If we need to lengthen we do so to phase 1
+  \item
+    If we need to reduce time we do so in phase 2.
+  \end{itemize}
+\item
+  As a result of either a or b, we have adjusted the timing of the
+  receiver to the transmitting node and synchronized them.
+\item
+  We continuously do so at every recessive to dominant transition to
+  keep synchronization
+
+  \begin{itemize}
+  \item
+    This reduces errors induced by noise (random error)
+  \item
+    Allows for resync to nodes that lost arbitration back to the one
+    that won previously.
+  \item
+  \end{itemize}
+\end{itemize}
+
+CAN Protocol Layers:
+
+Application layer
+
+Object layer
+
+Transfer layer
+
+Physical layer
+
+~
+
+~
+
+We are building the transfer layer?
+
+~
+
+Transfer layer:
+
+\begin{itemize}
+\item
+  Most of the CAN standard applies to this layer, it is what receives
+  messages from the physical layer and into the object layer for use in
+  the application.
+\item
+  Transfer layer is responsible for:
+
+  \begin{itemize}
+  \item
+    Synchronization
+  \item
+    Bit timing
+  \item
+    Message framing
+  \item
+    Arbitration
+  \item
+    Acknowledgement
+  \item
+    Error Detection
+  \item
+    Signalling
+  \item
+    Confinement
+  \end{itemize}
+\item
+  To accomplish the previous responsibilities, it performs the following
+  tasks:
+
+  \begin{itemize}
+  \item
+    Fault confinement
+  \item
+    Error detection
+  \item
+    Message Validation
+  \item
+    Arbitration
+  \item
+    Message framing
+  \item
+    Transfer rate and timing
+  \item
+    Information routing
+  \end{itemize}
+\end{itemize}
+
+~
+
+Physical layer
+
+\begin{itemize}
+\item
+  Pinout:
+
+  \begin{itemize}
+  \item
+    Pin 2: CAN- (Low)
+  \item
+    Pin 3: GND
+  \item
+    Pin 7: CAN+ (High)
+  \item
+    Pin 9: CAN V+ (power)
+  \end{itemize}
+\end{itemize}
+
+\begin{quote}
+~
+\end{quote}
+
+Frames:
+
+\begin{itemize}
+\item
+  Two types of frame format
+
+  \begin{enumerate}
+  \def\labelenumi{\arabic{enumi}.}
+  \item
+    Base frame format
+
+    \begin{enumerate}
+    \def\labelenumii{\roman{enumii}.}
+    \item
+      11- bits for identifier
+    \item
+      IDE bit dominant
+    \end{enumerate}
+  \item
+    Extended frame format
+
+    \begin{enumerate}
+    \def\labelenumii{\roman{enumii}.}
+    \item
+      11- bit identifier + 18-bit extension = 29-bit identifier
+    \item
+      IDE bit recessive
+    \end{enumerate}
+  \end{enumerate}
+\item
+  There are four types of frames.
+\item
+  Regardless of type all begin with a start of frame (SOF) bit to signal
+  start of frame transmission.
+\item
+  Frame types:
+
+  \begin{enumerate}
+  \def\labelenumi{\arabic{enumi}.}
+  \item
+    Data Frame: a frame containing node data for transmission.
+  \item
+    Remote frame: requests transmission of an identifier
+  \item
+    Error frame: frame type for any node detecting an error.
+  \item
+    Overload frame: a buffer/delay for data or remote frame.
+  \end{enumerate}
+\end{itemize}
+
+\end{document}
