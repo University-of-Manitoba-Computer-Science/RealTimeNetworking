@@ -1,3 +1,12 @@
+.ccls-cache
+E51-pack
+Core
+*.o
+*.elf
+*.hex
+*.lss
+.DS_Store
+build/*
 RealTimeNetworking.code-workspace
 Core/*
 E51-pack/*
