@@ -1,4 +1,4 @@
-#include "sam.h"
+#include <sam.h>
 #include "dcc_stdio.h"
 #include "button.h"
 #include "uart.h"
@@ -14,7 +14,7 @@
 // number of millisecond between LED flashes
 #define LED_FLASH_MS 1000UL
 #define GYRO_CHECK_MS 1000UL
-void heartInit();
+void heartInitLocal();
 
 // NOTE: this overflows every ~50 days, so I'm not going to care here...
 volatile uint32_t msCount = 0;
@@ -56,7 +56,7 @@ void initAll(){
 }
 
 
-void heartInit(){
+void heartInitLocal(){
   // setup the main clock/CPU clock to run at 2MHZ
 
   // define our main generic clock, which drives everything, to be 120MHz from the PLL
