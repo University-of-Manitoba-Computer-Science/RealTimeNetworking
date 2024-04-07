@@ -1,9 +1,10 @@
 #include "sam.h"
 #include <stddef.h>
 #include <stdbool.h>
-#if !defined(I2C)
-#define I2C
-#define I2C_BAUD (16U)
+#include "same51j20a.h"
+
+
+#define I2C_BAUD (1U)
 #define WRITE false
 #define READ true
 
@@ -35,4 +36,3 @@ void initRead(uint8_t addr, size_t bytes,volatile unsigned char *data);
 void accelOnlyMode();
 void sampleXL();
 
-#endif // I2C

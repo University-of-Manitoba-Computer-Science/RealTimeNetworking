@@ -6,10 +6,13 @@ void clkI2C(){
 	//36.5.1 I/O Lines
 	//See portIni	
 	
+	//IC2 likes to run at 100-400khz so we divide 48MHz/240 = 200Khz
+	GCLK_REGS->GCLK_GENCTRL[5] = GCLK_GENCTRL_DIV(24) | GCLK_GENCTRL_SRC_DFLL | GCLK_GENCTRL_GENEN_Msk;
+
 	//36.5.3 Clocks
 	//Our I2C is connected to SERCOM2 so we need to configure the clocks for that
 	//We need both core and slow generic clocks enabled
-	GCLK_REGS->GCLK_PCHCTRL[SERCOM2_GCLK_ID_CORE] |= GCLK_PCHCTRL_CHEN_Msk;
+	GCLK_REGS->GCLK_PCHCTRL[SERCOM2_GCLK_ID_CORE] = GCLK_PCHCTRL_GEN_GCLK5 | GCLK_PCHCTRL_CHEN_Msk;
 	while((GCLK_REGS->GCLK_PCHCTRL[SERCOM2_GCLK_ID_CORE] & GCLK_PCHCTRL_CHEN_Msk) != GCLK_PCHCTRL_CHEN_Msk){
 		//wait for sync
 	}//while	
@@ -270,7 +273,7 @@ void accelOnlyMode(){
 	//this control register first or else writting
 	//the next will get rid of the aut inc bit
 	//big shrug
-	uint16_t writeBuffer[WRITE_BUF_SIZE];
+	unsigned char writeBuffer[WRITE_BUF_SIZE];
 	writeBuffer[0] = CTRL_REG8_IF_ADD_INC_Msk;
 	initWrite(CTRL_REG8,1,writeBuffer);
 	

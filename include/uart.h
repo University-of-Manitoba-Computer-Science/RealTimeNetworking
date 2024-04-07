@@ -1,6 +1,7 @@
 #include "sam.h"
 #include <stddef.h>
 #include <stdbool.h>
+#include "same51j20a.h"
 
 //Look at the equation source is 16mhz target 1mhz
 // #define UART_BUAD 0x8000

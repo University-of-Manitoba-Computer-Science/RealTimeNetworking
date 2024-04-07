@@ -1,9 +1,11 @@
-#include <sam.h>
+#include "sam.h"
 #include "dcc_stdio.h"
 #include "button.h"
 #include "uart.h"
 #include "i2c.h"
 #include <assert.h>
+#include "same51j20a.h"
+
 
 
 #define DEBUG_WAIT 10000000UL
@@ -43,7 +45,7 @@ void initAllClks(){
 
 void initAll(){
 
-  heartInit();
+  heartInitLocal();
   initAllClks();
   initAllPorts();
   initI2C();
@@ -133,12 +135,8 @@ int main(void){
   while (1){
     __WFI();
     if ((msCount % LED_FLASH_MS) == 0){
-      uint8_t test[5] = {'a','b','c','d','e'};
-      //txUART(SERCOM0_REGS ,secCount);
- 
-        txUARTArr(SERCOM0_REGS, test, 5);
-
-      rxMode(SERCOM0_REGS);
+      unsigned char test[5] = {'a','b','c','d','e'};
+      accelOnlyMode();
       secCount = secCount + 1;
       PORT_REGS->GROUP[0].PORT_OUTTGL = PORT_PA14;
 /*       #ifndef NDEBUG
