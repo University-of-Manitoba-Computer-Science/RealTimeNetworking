@@ -817,18 +817,18 @@ err_t wifi8_init(wifi8_t *ctx)
     // digital_out_init(&ctx->rst, cfg->rst);
     // digital_out_init(&ctx->wkp, cfg->wkp);
     // digital_in_init(&ctx->int_pin, cfg->int_pin);
-    PORT_REGS->GROUP[0].PORT_DIRSET = SPI0_EN_Msk | SPI0_RST_Msk;
-    PORT_REGS->GROUP[0].PORT_DIRCLR = SPI0_INT_Msk;
-    PORT_REGS->GROUP[0].PORT_OUTCLR = SPI0_EN_Msk | SPI0_RST_Msk;
+    PORT_REGS->GROUP[0].PORT_DIRSET = WIFI0_EN_Msk | WIFI0_RST_Msk;
+    PORT_REGS->GROUP[0].PORT_DIRCLR = WIFI0_INT_Msk;
+    PORT_REGS->GROUP[0].PORT_OUTCLR = WIFI0_EN_Msk | WIFI0_RST_Msk;
 
-    // PORT_REGS->GROUP[0].PORT_PINCFG[SPI0_INT] = PORT_PINCFG_PMUXEN_Msk;
+    // PORT_REGS->GROUP[0].PORT_PINCFG[WIFI0_INT] = PORT_PINCFG_PMUXEN_Msk;
     // PORT_REGS->GROUP[0].PORT_PMUX[2] = PORT_PMUX_PMUXE_A;
 
     // NVIC_EnableIRQ(EIC_EXTINT_4_IRQn);
 
-    ctx->en = SPI0_EN_Msk;
-    ctx->rst = SPI0_RST_Msk;
-    ctx->int_pin = SPI0_INT_Msk;
+    ctx->en = WIFI0_EN_Msk;
+    ctx->rst = WIFI0_RST_Msk;
+    ctx->int_pin = WIFI0_INT_Msk;
 
     ctx->hif_bl_offset = 0;
     ctx->device_state = NM_STATE_DEINIT;
@@ -853,13 +853,13 @@ err_t wifi8_default_cfg(wifi8_t *ctx)
 {
     // digital_out_high(&ctx->en);
     // digital_out_low(&ctx->rst);
-    PORT_REGS->GROUP[0].PORT_OUTSET = SPI0_EN_Msk;
-    PORT_REGS->GROUP[0].PORT_OUTCLR = SPI0_RST_Msk;
+    PORT_REGS->GROUP[0].PORT_OUTSET = WIFI0_EN_Msk;
+    PORT_REGS->GROUP[0].PORT_OUTCLR = WIFI0_RST_Msk;
 
     delay_ms(100);
 
     // digital_out_high(&ctx->rst);
-    PORT_REGS->GROUP[0].PORT_OUTSET = SPI0_RST_Msk;
+    PORT_REGS->GROUP[0].PORT_OUTSET = WIFI0_RST_Msk;
 
     delay_ms(100);
 
@@ -868,18 +868,18 @@ err_t wifi8_default_cfg(wifi8_t *ctx)
 
 err_t wifi8_generic_write(wifi8_t *ctx, uint8_t *data_in, uint8_t len)
 {
-    spi_select_device(SPI0_CS_Msk);
+    spi_select_device(WIFI0_CS_Msk);
     err_t error_flag = spi_io(data_in, len, NULL, 0);
-    spi_deselect_device(SPI0_CS_Msk);
+    spi_deselect_device(WIFI0_CS_Msk);
 
     return error_flag;
 }
 
 err_t wifi8_generic_read(wifi8_t *ctx, uint8_t *data_out, uint8_t len)
 {
-    spi_select_device(SPI0_CS_Msk);
+    spi_select_device(WIFI0_CS_Msk);
     err_t error_flag = spi_io(NULL, 0, data_out, len);
-    spi_deselect_device(SPI0_CS_Msk);
+    spi_deselect_device(WIFI0_CS_Msk);
 
     return error_flag;
 }

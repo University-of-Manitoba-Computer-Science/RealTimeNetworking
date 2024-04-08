@@ -26,16 +26,6 @@ make install
 
 maximum clock frequency of 48MHz
 
-| Pin Name  | Pin Number | Pin Function | Pin Description     |
-| --------- | ---------- | ------------ | ------------------- |
-| SPI0_EN   | PA06       | EN           | Chip Enable         |
-| SPI0_RST  | PA22       | RST          | Reset               |
-| SPI0_CS   | PA23       | CS           | Chip Select         |
-| SPI0_SCK  | PA17       | SCK          | Serial Clock        |
-| SPI0_MISO | PA19       | MISO/SDO     | Master In Slave Out |
-| SPI0_MOSI | PA16       | MOSI/SDI     | Master Out Slave In |
-| SPI0_INT  | PA09       | INT          | Interrupt           |
-
 ## Mikroe HAL SPI Functions
 
 ```c
