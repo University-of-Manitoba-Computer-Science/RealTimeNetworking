@@ -856,25 +856,19 @@ err_t wifi8_default_cfg(wifi8_t *ctx)
     PORT_REGS->GROUP[0].PORT_OUTSET = SPI0_EN_Msk;
     PORT_REGS->GROUP[0].PORT_OUTCLR = SPI0_RST_Msk;
 
-    Delay_100ms();
+    delay_ms(100);
 
     // digital_out_high(&ctx->rst);
     PORT_REGS->GROUP[0].PORT_OUTSET = SPI0_RST_Msk;
 
-    Delay_100ms();
+    delay_ms(100);
 
     return wifi8_init_drv(ctx);
 }
 
 err_t wifi8_generic_write(wifi8_t *ctx, uint8_t *data_in, uint8_t len)
 {
-    // spi_master_select_device(ctx->chip_select);
-    // Delay_10us();
-    // err_t error_flag = spi_master_write(&ctx->spi, data_in, len);
-    // spi_master_deselect_device(ctx->chip_select);
-
     spi_select_device(SPI0_CS_Msk);
-    // err_t error_flag = spi_write(data_in, len);
     err_t error_flag = spi_io(data_in, len, NULL, 0);
     spi_deselect_device(SPI0_CS_Msk);
 
@@ -883,13 +877,7 @@ err_t wifi8_generic_write(wifi8_t *ctx, uint8_t *data_in, uint8_t len)
 
 err_t wifi8_generic_read(wifi8_t *ctx, uint8_t *data_out, uint8_t len)
 {
-    // spi_master_select_device(ctx->chip_select);
-    // Delay_10us();
-    // err_t error_flag = spi_master_read(&ctx->spi, data_out, len);
-    // spi_master_deselect_device(ctx->chip_select);
-
     spi_select_device(SPI0_CS_Msk);
-    // err_t error_flag = spi_read(data_out, len);
     err_t error_flag = spi_io(NULL, 0, data_out, len);
     spi_deselect_device(SPI0_CS_Msk);
 
@@ -912,10 +900,10 @@ err_t wifi8_reg_write(wifi8_t *ctx, uint32_t addr, uint32_t data_in)
     {
         if (result != WIFI8_OK)
         {
-            Delay_1ms();
+            delay_ms(1);
             spi_cmd(ctx, WIFI8_CMD_RESET, 0, 0, 0, 0);
             spi_cmd_rsp(ctx, WIFI8_CMD_RESET);
-            Delay_1ms();
+            delay_ms(1);
         }
 
         result = spi_cmd(ctx, cmd, addr, data_in, 4, clockless);
@@ -951,10 +939,10 @@ err_t wifi8_reg_read(wifi8_t *ctx, uint32_t addr, uint32_t *data_out)
     {
         if (result != WIFI8_OK)
         {
-            Delay_1ms();
+            delay_ms(1);
             spi_cmd(ctx, WIFI8_CMD_RESET, 0, 0, 0, 0);
             spi_cmd_rsp(ctx, WIFI8_CMD_RESET);
-            Delay_1ms();
+            delay_ms(1);
         }
         result = spi_cmd(ctx, cmd, addr, 0, 4, clockless);
         if (result != WIFI8_OK)
@@ -1007,10 +995,10 @@ err_t wifi8_block_read(wifi8_t *ctx, uint32_t addr, uint8_t *data_buf, uint16_t 
     {
         if (result != WIFI8_OK)
         {
-            Delay_1ms();
+            delay_ms(1);
             spi_cmd(ctx, WIFI8_CMD_RESET, 0, 0, 0, 0);
             spi_cmd_rsp(ctx, WIFI8_CMD_RESET);
-            Delay_1ms();
+            delay_ms(1);
             retry--;
         }
 
@@ -1065,10 +1053,10 @@ err_t wifi8_block_write(wifi8_t *ctx, uint32_t addr, uint8_t *data_buf, uint16_t
     {
         if (result != WIFI8_OK)
         {
-            Delay_1ms();
+            delay_ms(1);
             spi_cmd(ctx, WIFI8_CMD_RESET, 0, 0, 0, 0);
             spi_cmd_rsp(ctx, WIFI8_CMD_RESET);
-            Delay_1ms();
+            delay_ms(1);
         }
 
         result = spi_cmd(ctx, cmd, addr, 0, buf_len, 0);
@@ -2252,7 +2240,7 @@ static err_t cpu_start(wifi8_t *ctx)
     {
         return WIFI8_ERROR;
     }
-    Delay_1ms();
+    delay_ms(1);
 
     return WIFI8_OK;
 }
@@ -2271,7 +2259,7 @@ static err_t wait_for_bootrom(wifi8_t *ctx, uint8_t arg)
         {
             break;
         }
-        Delay_1ms(); /* Removing this can cause a bus error. */
+        delay_ms(1); /* Removing this can cause a bus error. */
     }
     ret = wifi8_reg_read(ctx, M2M_WAIT_FOR_HOST_REG, &reg);
     reg &= 0x1;
@@ -2281,7 +2269,7 @@ static err_t wait_for_bootrom(wifi8_t *ctx, uint8_t arg)
     {
         while (reg != M2M_FINISH_BOOT_ROM)
         {
-            Delay_1ms();
+            delay_ms(1);
             ret = wifi8_reg_read(ctx, BOOTROM_REG, &reg);
 
             if (++cnt > TIMEOUT)
@@ -2348,8 +2336,8 @@ static err_t wait_for_firmware_start(wifi8_t *ctx, uint8_t arg)
 
     while (checkValue != reg)
     {
-        Delay_1ms();
-        Delay_1ms();
+        delay_ms(1);
+        delay_ms(1);
 
         if (WIFI8_OK != wifi8_reg_read(ctx, regAddress, &reg))
         {
@@ -2469,7 +2457,7 @@ static err_t chip_wake(wifi8_t *ctx)
         {
             break;
         }
-        Delay_5ms();
+        delay_ms(5);
         trials++;
         if (trials > WAKEUP_TRIALS)
         {
@@ -2664,7 +2652,7 @@ static err_t hif_send(wifi8_t *ctx, uint8_t u8_gid, uint8_t u8_opcode, uint8_t *
                  */
                 if (cnt >= 1000)
                 {
-                    Delay_5ms();
+                    delay_ms(5);
                 }
                 if (!(reg & NBIT1))
                 {

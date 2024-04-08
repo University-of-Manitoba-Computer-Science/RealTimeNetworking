@@ -42,10 +42,6 @@ extern "C"
 #define digital_in_t uint8_t
 #define digital_out_t uint8_t
 #define err_t uint8_t
-
-#define Delay_5ms() delay_ms(5)
-#define Delay_1ms() delay_ms(1)
-#define Delay_100ms() delay_ms(100)
 // END MY PATCHES
 
 /*!
