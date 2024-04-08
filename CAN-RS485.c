@@ -41,6 +41,7 @@ int main(void)
     portUART();
     clkUART();
     initUART();
+    rxMode(SERCOM0_REGS);
 
     // we want interrupts!
     __enable_irq();
@@ -60,7 +61,12 @@ int main(void)
                 }
             }
 
-            // TODO check for waiting RS485 data and send it over CAN
+            while (SERCOM0_REGS->USART_INT.SERCOM_INTFLAG &
+                   SERCOM_USART_INT_INTFLAG_TXC_Msk) {
+                uint8_t data = rxUART(SERCOM0_REGS);
+
+                queue_message(CAN_ID, &data, 1);
+            }
         }
     }
     return 0;
