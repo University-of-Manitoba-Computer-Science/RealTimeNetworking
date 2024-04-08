@@ -2434,7 +2434,6 @@ static err_t chip_wake(wifi8_t *ctx)
 
     if (WIFI8_OK != wifi8_reg_read(ctx, HOST_CORT_COMM, &reg))
     {
-        printf("wifi8_reg_read failed\n");
         return WIFI8_ERROR;
     }
     if (!(reg & NBIT0))

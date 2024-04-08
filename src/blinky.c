@@ -54,17 +54,18 @@ int main(void)
 
   // initialize the wifi
   err_t result = wifi8_init(&wifi8);
-  printf("wifi8_init: %d\n", result);
+  dbg_write_str("wifi8_init:");
+  dbg_write_u8(&result, 1);
 
   delay_ms(2000);
 
   if (WIFI8_OK != wifi8_default_cfg(&wifi8))
   {
-    printf("error setting default config\n");
+    dbg_write_str("error setting default config\n");
     for (;;)
       ;
   }
-  printf("wifi chip initialization completed.\n");
+  dbg_write_str("wifi chip initialization completed.\n");
 
   wifi8.app_wifi_cb = ap_wifi_cb;
   wifi8.app_socket_cb = socket_cb;
@@ -75,19 +76,15 @@ int main(void)
   wifi8_m2m_rev_t fw_version;
   if (WIFI8_OK == wifi8_get_full_firmware_version(&wifi8, &fw_version))
   {
-    printf("Firmware HIF (%u) : %u.%u \n",
-           ((uint16_t)(((fw_version.u16_firmware_hif_info) >> (14)) & (0x3))),
-           ((uint16_t)(((fw_version.u16_firmware_hif_info) >> (8)) & (0x3f))),
-           ((uint16_t)(((fw_version.u16_firmware_hif_info) >> (0)) & (0xff))));
-    printf("Firmware ver   : %u.%u.%u \n",
-           (uint16_t)fw_version.u8_firmware_major,
-           (uint16_t)fw_version.u8_firmware_minor,
-           (uint16_t)fw_version.u8_firmware_patch);
-    printf("Firmware Build %s Time %s\n", fw_version.build_date, fw_version.build_time);
+    dbg_write_str("Firmware Build ");
+    dbg_write_str(fw_version.build_date);
+    dbg_write_str(" Time ");
+    dbg_write_str(fw_version.build_time);
+    dbg_write_str("\n");
   }
   else
   {
-    printf("error reading full firmware version.\n");
+    dbg_write_str("Error getting firmware version\n");
     for (;;)
       ;
   }
@@ -108,13 +105,13 @@ int main(void)
   {
     if (WIFI8_OK != wifi8_start_ap(&wifi8, &ap_config))
     {
-      printf("Error starting access point\n");
+      dbg_write_str("error starting access point\n");
       for (;;)
         ;
     }
     else
     {
-      printf("Opening access point...\n");
+      dbg_write_str("access point started\n");
     }
   }
 
@@ -125,7 +122,6 @@ int main(void)
 
   // led indicates when server is running and ready to accept connections
   PORT_REGS->GROUP[0].PORT_OUTCLR = PORT_PA14;
-  printf("main: established connection\n");
 
   while (1)
   {
@@ -136,7 +132,7 @@ int main(void)
 
       if ((tcp_server_socket = wifi8_socket_create(&wifi8, 2, 1, 0)) < 0)
       {
-        printf("main: failed to create TCP server socket error!\r\n");
+        dbg_write_str("error creating socket\n");
       }
       else
       {
@@ -158,22 +154,18 @@ static void ap_wifi_cb(uint8_t u8_msg_type, void *pv_msg)
 
     if (pstr_wifi_state->u8_curr_state == M2M_WIFI_CONNECTED)
     {
-      printf("wifi_cb: a new device has connected.\r\n");
+      dbg_write_str("wifi_cb: client connected\n");
     }
     else if (pstr_wifi_state->u8_curr_state == M2M_WIFI_DISCONNECTED)
     {
-      printf("wifi_cb: a device has disconnected.\r\n");
+      dbg_write_str("wifi_cb: client disconnected\n");
     }
 
     break;
   }
   case M2M_WIFI_REQ_DHCP_CONF:
   {
-    volatile uint8_t *pu8ip_address = (uint8_t *)pv_msg;
-
-    printf("wifi_cb: IP: %u.%u.%u.%u\r\n",
-           (uint16_t)pu8ip_address[0], (uint16_t)pu8ip_address[1],
-           (uint16_t)pu8ip_address[2], (uint16_t)pu8ip_address[3]);
+    dbg_write_str("wifi_cb: receive ip address: ");
     break;
   }
   default:
@@ -190,7 +182,9 @@ static void socket_cb(int8_t sock, uint8_t u8_msg, void *pv_msg)
     return;
   }
 
-  printf("msg: %d, sock: %d, server: %d, client: %d\n", u8_msg, sock, tcp_server_socket, tcp_client_socket);
+  dbg_write_str("socket_cb: ");
+  dbg_write_u8(&u8_msg, 1);
+  dbg_write_str("\n");
 
   switch (u8_msg)
   {
@@ -199,13 +193,12 @@ static void socket_cb(int8_t sock, uint8_t u8_msg, void *pv_msg)
     wifi8_socket_bind_msg_t *pstr_bind = (wifi8_socket_bind_msg_t *)pv_msg;
     if (pstr_bind && pstr_bind->status == 0)
     {
-      // log_printf(&logger, "socket_cb: bind success!\r\n");
       delay_ms(500);
       wifi8_socket_listen(&wifi8, sock, 0);
     }
     else
     {
-      printf("socket_cb: bind error!\r\n");
+      dbg_write_str("socket_cb: bind error!\n");
       wifi8_socket_close(&wifi8, tcp_server_socket);
       tcp_server_socket = -1;
     }
@@ -216,11 +209,10 @@ static void socket_cb(int8_t sock, uint8_t u8_msg, void *pv_msg)
     wifi8_socket_listen_msg_t *pstr_listen = (wifi8_socket_listen_msg_t *)pv_msg;
     if (pstr_listen && pstr_listen->status == 0)
     {
-      // log_printf(&logger, "socket_cb: listen success!\r\n");
     }
     else
     {
-      printf("socket_cb: listen error!\r\n");
+      dbg_write_str("socket_cb: listen error!\n");
       wifi8_socket_close(&wifi8, tcp_server_socket);
       tcp_server_socket = -1;
     }
@@ -231,12 +223,7 @@ static void socket_cb(int8_t sock, uint8_t u8_msg, void *pv_msg)
     wifi8_socket_accept_msg_t *pstr_accept = (wifi8_socket_accept_msg_t *)pv_msg;
     if (pstr_accept)
     {
-      printf("socket_cb: accept. sock = %d, addr = %x:%d\r\n",
-             pstr_accept->sock,
-             pstr_accept->str_addr.sin_addr.s_addr,
-             pstr_accept->str_addr.sin_port);
-
-      // log_printf(&logger, "socket_cb: accept success!\r\n");
+      dbg_write_str("socket_cb: accept success!\n");
       tcp_client_socket = pstr_accept->sock;
 
       char http_response[MAX_RESPONSE_SIZE];
@@ -246,14 +233,14 @@ static void socket_cb(int8_t sock, uint8_t u8_msg, void *pv_msg)
       uint8_t result = wifi8_socket_receive(&wifi8, pstr_accept->sock, gau8_socket_test_buffer, sizeof(gau8_socket_test_buffer), 5000);
       if (result != WIFI8_OK)
       {
-        printf("socket_cb: receive error!\r\n");
+        dbg_write_str("socket_cb: receive error!\n");
         wifi8_socket_close(&wifi8, tcp_client_socket);
         tcp_client_socket = -1;
       }
     }
     else
     {
-      printf("socket_cb: accept error!\r\n");
+      dbg_write_str("socket_cb: accept error!\n");
       wifi8_socket_close(&wifi8, tcp_server_socket);
       tcp_server_socket = -1;
     }
@@ -269,8 +256,7 @@ static void socket_cb(int8_t sock, uint8_t u8_msg, void *pv_msg)
     wifi8_socket_recv_msg_t *pstr_recv = (wifi8_socket_recv_msg_t *)pv_msg;
     if (pstr_recv && pstr_recv->s16_buffer_size > 0)
     {
-      // log_printf(&logger, "%s", pstr_recv->pu8_buffer);
-      printf("%s", pstr_recv->pu8_buffer);
+      dbg_write_str("socket_cb: recv success!\n");
       if ((strchr(pstr_recv->pu8_buffer, 13) != 0) || (strchr(pstr_recv->pu8_buffer, 10) != 0))
       {
         char http_response[MAX_RESPONSE_SIZE];
@@ -285,8 +271,7 @@ static void socket_cb(int8_t sock, uint8_t u8_msg, void *pv_msg)
     }
     else
     {
-      // log_printf(&logger, "socket_cb: close socket!\r\n");
-      printf("socket_cb: recv error!\r\n");
+      dbg_write_str("socket_cb: recv error!\n");
       wifi8_socket_close(&wifi8, tcp_client_socket);
       tcp_client_socket = -1;
     }
