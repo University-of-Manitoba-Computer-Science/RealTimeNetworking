@@ -69,7 +69,7 @@ int main(void)
                 uart_len = rxUART(SERCOM4_REGS, rx_data, MAX_RX_DATA_LEN);
 
                 if (uart_len > 0) {
-                    queue_message(CAN_ID, &rx_data, uart_len);
+                    queue_message(CAN_ID, rx_data, uart_len);
                 }
             }
         }
