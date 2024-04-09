@@ -7,7 +7,8 @@
 
 #define MAX_RX_DATA_LEN 16
 
-#define CAN_ID 0x200
+#define CAN_ID    0x200
+#define CAN_RX_ID 0x201
 
 // NOTE: this overflows every ~50 days, so I'm not going to care here...
 // volatile uint32_t msCount = 0;
@@ -37,20 +38,21 @@ int main(void)
     PM_REGS->PM_SLEEPCFG |= PM_SLEEPCFG_SLEEPMODE_IDLE;
 
     heartInit();
-    uint16_t rcv_id = CAN_ID + 1; // TODO choose ids to accept
+    uint16_t rcv_id = CAN_RX_ID;
     canInit(&rcv_id, 1);
     portUART();
     clkUART();
     initUART();
-    rxMode(SERCOM0_REGS);
+    rxMode(SERCOM0_REGS); // enable SERCOM0 reading
 
     // we want interrupts!
     __enable_irq();
 
     // sleep until we have an interrupt
-    rxMode(SERCOM0_REGS); // SERCOM0 does not conflict with CAN0
     while (1) {
         __WFI();
+
+        // forward messages once every second
         if ((get_ticks() % 1000) == 0) {
             // check for waiting CAN data and send it over RS485
             int can_len = 0;
@@ -63,6 +65,7 @@ int main(void)
                 }
             }
 
+            // check for waiting RS-485 data and send it over CAN
             int uart_len = 1;
             while (uart_len != 0) {
                 uint8_t rx_data[MAX_RX_DATA_LEN];
