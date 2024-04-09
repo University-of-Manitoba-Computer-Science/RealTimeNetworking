@@ -35,6 +35,7 @@ int main(void)
     init_access_point();
     init_wifi_socket();
 
+    register_wifi_cmd("help", set_light_handler);
     register_wifi_cmd("set_light", set_light_handler);
     register_wifi_cmd("get_light", get_light_handler);
 

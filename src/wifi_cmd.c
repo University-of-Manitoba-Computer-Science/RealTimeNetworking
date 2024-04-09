@@ -47,3 +47,16 @@ void run_wifi_cmd(int32_t cmd, uint8_t *response, uint8_t argc, char **argv)
         wifi_cmds[cmd].func(response, argc, argv);
     }
 }
+
+void help_handler(uint8_t *response, uint8_t argc, char **argv)
+{
+    strcat(response, "Available commands:\n");
+    for (int32_t i = 0; i < MAX_WIFI_CMDS; i++)
+    {
+        if (wifi_cmds[i].cmd != 0)
+        {
+            strcat(response, wifi_cmds[i].cmd);
+            strcat(response, "\n");
+        }
+    }
+}
