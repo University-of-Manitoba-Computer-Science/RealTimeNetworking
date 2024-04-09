@@ -1,11 +1,25 @@
 #include "heart.h"
 
-#include <sam.h>
-
 // setup our heartbeat to be 1ms: we overflow at 1ms intervals with a 120MHz
 // clock uses the SysTicks unit so that we get reliable debugging (timer stops
 // on breakpoints)
 #define MS_TICKS 120000UL
+
+volatile uint32_t msCount = 0;
+
+uint32_t get_ticks()
+{
+    return msCount;
+}
+
+void delay_ms(uint32_t ms)
+{
+    uint32_t start = msCount;
+    while (msCount - start < ms)
+    {
+        __WFI();
+    }
+}
 
 void heartInit()
 {
@@ -66,4 +80,9 @@ void heartInit()
     NVIC_EnableIRQ(SysTick_IRQn);
 
     SysTick_Config(MS_TICKS);
+}
+
+void SysTick_Handler()
+{
+    msCount++;
 }

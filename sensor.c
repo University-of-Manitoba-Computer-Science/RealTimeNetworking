@@ -3,45 +3,47 @@
 #include "button.h"
 #include "uart.h"
 #include "i2c.h"
+#include "heart.h"
 #include <assert.h>
-
 
 #define DEBUG_WAIT 10000000UL
 // setup our heartbeat to be 1ms: we overflow at 1ms intervals with a 120MHz clock
 // uses the SysTicks unit so that we get reliable debugging (timer stops on breakpoints)
 #define MS_TICKS 2000UL
-//#define MS_TICKS 120000UL
-// number of millisecond between LED flashes
+// #define MS_TICKS 120000UL
+//  number of millisecond between LED flashes
 #define LED_FLASH_MS 1000UL
 #define GYRO_CHECK_MS 1000UL
 void heartInitLocal();
 
 // NOTE: this overflows every ~50 days, so I'm not going to care here...
-volatile uint32_t msCount = 0;
-volatile uint32_t secCount = 0; 
+// volatile uint32_t msCount = 0;
+volatile uint32_t secCount = 0;
 
-
-void initAllPorts(){
+void initAllPorts()
+{
 
   // LED output
   PORT_REGS->GROUP[0].PORT_DIRSET = PORT_PA14;
   PORT_REGS->GROUP[0].PORT_OUTSET = PORT_PA14;
 
-  port15Init(); //init button ports
-  sercom2Init(); //init sercom2 -> i2c ports
-  portUART(); //init UART ports
+  port15Init();  // init button ports
+  sercom2Init(); // init sercom2 -> i2c ports
+  portUART();    // init UART ports
 
-}//initAllPorts
+} // initAllPorts
 
-void initAllClks(){
+void initAllClks()
+{
 
   clkButton();
   clkI2C();
   clkUART();
 
-}//initAllClks
+} // initAllClks
 
-void initAll(){
+void initAll()
+{
 
   heartInit();
   initAllClks();
@@ -50,13 +52,12 @@ void initAll(){
   initButton();
   initUART();
 
-  //init gyro stuff
-  //accelOnlyMode();
-
+  // init gyro stuff
+  // accelOnlyMode();
 }
 
-
-void heartInitLocal(){
+void heartInitLocal()
+{
   // setup the main clock/CPU clock to run at 2MHZ
 
   // define our main generic clock, which drives everything, to be 120MHz from the PLL
@@ -74,39 +75,38 @@ void heartInitLocal(){
   SysTick_Config(MS_TICKS);
 }
 
-
 // Fires every 1ms
-void SysTick_Handler(){
-  msCount++;
-}
+// void SysTick_Handler(){
+//   msCount++;
+// }
 
 // ISR for  external interrupt 15, add processing code as required...
-void EIC_EXTINT_15_Handler(){
+void EIC_EXTINT_15_Handler()
+{
   PORT_REGS->GROUP[0].PORT_OUTTGL = PORT_PA14;
   // clear the interrupt! and go to the next operating mode
   EIC_REGS->EIC_INTFLAG |= EXTINT15_MASK;
 }
 
-void test(){
+void test()
+{
   dbg_write_str("beforee");
   PORT_REGS->GROUP[0].PORT_OUTTGL = PORT_PA14;
   dbg_write_str("afterr");
 }
 
-int main(void){
-
-
+int main(void)
+{
 
 #ifndef NDEBUG
-  for (int i = 0; i < DEBUG_WAIT; i++);
+  for (int i = 0; i < DEBUG_WAIT; i++)
+    ;
 #endif
 
   // NOTE: the silkscreen on the curiosity board is WRONG! it's PB4 and PB5 NOT PA4 and PA5
 
   // see the header files within include/component for register definitions, which align with the data sheet for the processor
   // e.g. port.h contains the masks and definitions for manipulating gpio
-
-
 
   // enable cache
   // tradeoff: +: really helps with repeated code/data (like when doing animations in a game)
@@ -130,28 +130,29 @@ int main(void){
 
   PORT_REGS->GROUP[0].PORT_OUTTGL = PORT_PA14;
   // sleep until we have an interrupt
-  while (1){
+  while (1)
+  {
     __WFI();
-    if ((msCount % LED_FLASH_MS) == 0){
-      uint8_t test[5] = {'a','b','c','d','e'};
-      //txUART(SERCOM0_REGS ,secCount);
- 
-        txUARTArr(SERCOM0_REGS, test, 5);
+    if ((get_ticks() % LED_FLASH_MS) == 0)
+    {
+      uint8_t test[5] = {'a', 'b', 'c', 'd', 'e'};
+      // txUART(SERCOM0_REGS ,secCount);
+
+      txUARTArr(SERCOM0_REGS, test, 5);
 
       rxMode(SERCOM0_REGS);
       secCount = secCount + 1;
       PORT_REGS->GROUP[0].PORT_OUTTGL = PORT_PA14;
-/*       #ifndef NDEBUG
-        dbg_write_u32(&secCount,1);
-      #endif
- */         
-      #ifndef NDEBUG
-        rxMode(SERCOM4_REGS);
-        unsigned char rxCount = rxUART(SERCOM4_REGS);
-        dbg_write_u8(&rxCount,1);
-      #endif  
+      /*       #ifndef NDEBUG
+              dbg_write_u32(&secCount,1);
+            #endif
+       */
+#ifndef NDEBUG
+      rxMode(SERCOM4_REGS);
+      unsigned char rxCount = rxUART(SERCOM4_REGS);
+      dbg_write_u8(&rxCount, 1);
+#endif
     }
- 
   }
   return 0;
 }

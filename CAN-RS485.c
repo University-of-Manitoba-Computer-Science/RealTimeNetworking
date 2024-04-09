@@ -9,18 +9,19 @@
 #define CAN_ID 0x200
 
 // NOTE: this overflows every ~50 days, so I'm not going to care here...
-volatile uint32_t msCount = 0;
+// volatile uint32_t msCount = 0;
 
 // Fires every 1ms
-void SysTick_Handler()
-{
-    msCount++;
-}
+// void SysTick_Handler()
+// {
+//     msCount++;
+// }
 
 int main(void)
 {
 #ifndef NDEBUG
-    for (int i = 0; i < 100000; i++);
+    for (int i = 0; i < 100000; i++)
+        ;
 #endif
 
     // enable cache
@@ -47,22 +48,27 @@ int main(void)
     __enable_irq();
 
     // sleep until we have an interrupt
-    while (1) {
+    while (1)
+    {
         __WFI();
-        if ((msCount % 1000) == 0) {
+        if ((get_ticks() % 1000) == 0)
+        {
             // check for waiting CAN data and send it over RS485
             int can_len = 0;
-            while (can_len != -1) {
+            while (can_len != -1)
+            {
                 uint8_t rx_data[MAX_RX_DATA_LEN];
                 can_len = dequeue_message(rx_data, MAX_RX_DATA_LEN);
 
-                if (can_len > 0) {
+                if (can_len > 0)
+                {
                     txUARTArr(SERCOM0_REGS, rx_data, can_len);
                 }
             }
 
             while (SERCOM0_REGS->USART_INT.SERCOM_INTFLAG &
-                   SERCOM_USART_INT_INTFLAG_TXC_Msk) {
+                   SERCOM_USART_INT_INTFLAG_TXC_Msk)
+            {
                 uint8_t data = rxUART(SERCOM0_REGS);
 
                 queue_message(CAN_ID, &data, 1);
