@@ -1,4 +1,5 @@
 #include "wifi_app.h"
+#include <stdio.h>
 
 static t_msg_wifi_product msg_wifi_product = {.name = "WiFi 8 Click"};
 
@@ -213,7 +214,60 @@ static void socket_cb(int8_t sock, uint8_t u8_msg, void *pv_msg)
         {
             if ((strchr(pstr_recv->pu8_buffer, 13) != 0) || (strchr(pstr_recv->pu8_buffer, 10) != 0))
             {
-                wifi8_socket_send(&wifi8, tcp_client_socket, &msg_wifi_product, sizeof(t_msg_wifi_product));
+                char command[100] = {0};
+
+                // get the substring before the space or newline
+                uint8_t *space_idx = strchr(pstr_recv->pu8_buffer, ' ');
+                uint8_t *newline_idx = strchr(pstr_recv->pu8_buffer, '\n');
+                uint8_t *carriage_return_idx = strchr(pstr_recv->pu8_buffer, '\r');
+
+                uint8_t *split_idx = space_idx;
+                if (newline_idx != 0 && (split_idx == 0 || newline_idx < split_idx))
+                {
+                    split_idx = newline_idx;
+                }
+
+                if (carriage_return_idx != 0 && (split_idx == 0 || carriage_return_idx < split_idx))
+                {
+                    split_idx = carriage_return_idx;
+                }
+
+                strncpy(command, pstr_recv->pu8_buffer, split_idx - pstr_recv->pu8_buffer);
+
+                // count the number of arguments
+                uint8_t argc = 1;
+                char *arg_idx = strchr(pstr_recv->pu8_buffer, ' ');
+                while (arg_idx != 0)
+                {
+                    argc++;
+                    arg_idx = strchr(arg_idx + 1, ' ');
+                }
+
+                // get the arguments
+                char *argv[argc];
+                char *arg = strtok(pstr_recv->pu8_buffer, " ");
+                for (int i = 0; i < argc; i++)
+                {
+                    argv[i] = arg;
+                    arg = strtok(0, " ");
+                }
+
+                // get the command index
+                int32_t cmd_idx = get_cmd_index(command);
+                char response[100] = {0};
+
+                if (cmd_idx >= 0)
+                {
+                    // execute the command
+                    run_wifi_cmd(cmd_idx, (uint8_t *)response, argc, argv);
+                }
+                else
+                {
+                    strcat(response, "Invalid command\n");
+                }
+
+                // send the command index
+                wifi8_socket_send(&wifi8, tcp_client_socket, (uint8_t *)response, strlen(response));
             }
             else
             {

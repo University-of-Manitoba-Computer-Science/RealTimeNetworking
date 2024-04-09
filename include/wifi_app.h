@@ -3,6 +3,8 @@
 
 #include <wifi8.h>
 #include <string.h>
+#include <dcc_stdio.h>
+#include "wifi_cmd.h"
 
 #define MAIN_TCP_SERVER_PORT 8080
 

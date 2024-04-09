@@ -4,6 +4,8 @@
 #include "spi.h"
 #include "wifi8.h"
 #include "wifi_app.h"
+#include "wifi_cmd.h"
+#include "wifi_basic_cmds.h"
 #include <string.h>
 #include <assert.h>
 
@@ -32,6 +34,9 @@ int main(void)
     print_wifi_version();
     init_access_point();
     init_wifi_socket();
+
+    register_wifi_cmd("set_light", set_light_handler);
+    register_wifi_cmd("get_light", get_light_handler);
 
     // led indicates when server is running and ready to accept connections
     PORT_REGS->GROUP[0].PORT_OUTCLR = PORT_PA14;
