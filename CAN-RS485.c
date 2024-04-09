@@ -37,9 +37,14 @@ int main(void)
     // sleep to idle (wake on interrupts)
     PM_REGS->PM_SLEEPCFG |= PM_SLEEPCFG_SLEEPMODE_IDLE;
 
+    // setup heart
     heartInit();
+
+    // setup CAN
     uint16_t rcv_id = CAN_RX_ID;
     canInit(&rcv_id, 1);
+
+    // setup RS-485
     portUART();
     clkUART();
     initUART();

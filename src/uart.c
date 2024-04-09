@@ -5,6 +5,8 @@
 
 #define BUFFER_SIZE 16
 
+// define circular queue with a fixed maximum size
+// overwrite old messages if the queue is full
 typedef struct RX_BUFFER {
     int     num_messages;
     int     start_index;
@@ -15,34 +17,37 @@ rx_buffer_t sercom0_buf = {
     .num_messages = 0,
     .start_index  = 0,
 };
+
 rx_buffer_t sercom4_buf = {
     .num_messages = 0,
     .start_index  = 0,
 };
 
+static void dequeue_uart(sercom_registers_t *sercom, rx_buffer_t *buf)
+{
+    // temporarily disable interrupt
+    sercom->USART_INT.SERCOM_INTENCLR = SERCOM_USART_INT_INTENSET_RXC_Msk;
+
+    if (sercom->USART_INT.SERCOM_INTFLAG & SERCOM_USART_INT_INTFLAG_RXC_Msk) {
+        buf->buffer[buf->start_index + buf->num_messages] =
+            sercom->USART_INT.SERCOM_DATA;
+        buf->num_messages = buf->num_messages >= BUFFER_SIZE
+                                ? BUFFER_SIZE
+                                : buf->num_messages + 1;
+    }
+
+    // reenable interrupt
+    sercom->USART_INT.SERCOM_INTENSET = SERCOM_USART_INT_INTENSET_RXC_Msk;
+}
+
 void SERCOM0_2_Handler()
 {
-    if (SERCOM0_REGS->USART_INT.SERCOM_INTFLAG &
-        SERCOM_USART_INT_INTFLAG_RXC_Msk) {
-        dbg_write_str("hi");
-        sercom0_buf.buffer[sercom0_buf.start_index + sercom0_buf.num_messages] =
-            SERCOM0_REGS->USART_INT.SERCOM_DATA;
-        sercom0_buf.num_messages = sercom0_buf.num_messages >= BUFFER_SIZE
-                                       ? BUFFER_SIZE
-                                       : sercom0_buf.num_messages + 1;
-    }
+    dequeue_uart(SERCOM0_REGS, &sercom0_buf);
 }
 
 void SERCOM4_2_Handler()
 {
-    if (SERCOM4_REGS->USART_INT.SERCOM_INTFLAG &
-        SERCOM_USART_INT_INTFLAG_RXC_Msk) {
-        sercom4_buf.buffer[sercom4_buf.start_index + sercom4_buf.num_messages] =
-            SERCOM4_REGS->USART_INT.SERCOM_DATA;
-        sercom4_buf.num_messages = sercom4_buf.num_messages >= BUFFER_SIZE
-                                       ? BUFFER_SIZE
-                                       : sercom4_buf.num_messages + 1;
-    }
+    dequeue_uart(SERCOM4_REGS, &sercom4_buf);
 }
 
 void clkUART()
@@ -249,44 +254,32 @@ void txUARTArr(sercom_registers_t *sercom, uint8_t *data, uint8_t len)
 
 uint8_t rxUART(sercom_registers_t *sercom, uint8_t *buffer, int buffer_size)
 {
-    int size = 0;
+    // determine buffer to read from
+    rx_buffer_t *buf;
     if (sercom == SERCOM0_REGS) {
-        // temporarily disable interrupt
-        SERCOM0_REGS->USART_INT.SERCOM_INTENCLR =
-            SERCOM_USART_INT_INTENSET_RXC_Msk;
-
-        size = sercom0_buf.num_messages > buffer_size
-                   ? buffer_size
-                   : sercom0_buf.num_messages;
-
-        for (int i = 0; i < size; ++i) {
-            buffer[i] = sercom0_buf.buffer[sercom0_buf.start_index];
-            sercom0_buf.start_index =
-                (sercom0_buf.start_index + 1) % BUFFER_SIZE;
-            --sercom0_buf.num_messages;
-        }
-
-        SERCOM0_REGS->USART_INT.SERCOM_INTENSET =
-            SERCOM_USART_INT_INTENSET_RXC_Msk;
+        buf = &sercom0_buf;
     } else if (sercom == SERCOM4_REGS) {
-        // temporarily disable interrupt
-        SERCOM4_REGS->USART_INT.SERCOM_INTENCLR =
-            SERCOM_USART_INT_INTENSET_RXC_Msk;
-
-        size = sercom4_buf.num_messages > buffer_size
-                   ? buffer_size
-                   : sercom4_buf.num_messages;
-
-        for (int i = 0; i < size; ++i) {
-            buffer[i] = sercom4_buf.buffer[sercom4_buf.start_index];
-            sercom4_buf.start_index =
-                (sercom4_buf.start_index + 1) % BUFFER_SIZE;
-            --sercom4_buf.num_messages;
-        }
-
-        SERCOM4_REGS->USART_INT.SERCOM_INTENSET =
-            SERCOM_USART_INT_INTENSET_RXC_Msk;
+        buf = &sercom4_buf;
+    } else {
+        return 0;
     }
+
+    // temporarily disable interrupt
+    sercom->USART_INT.SERCOM_INTENCLR = SERCOM_USART_INT_INTENSET_RXC_Msk;
+
+    // compute size of buffer to read
+    int size = 0;
+    size = buf->num_messages > buffer_size ? buffer_size : buf->num_messages;
+
+    // read until return buffer is full
+    for (int i = 0; i < size; ++i) {
+        buffer[i]        = buf->buffer[buf->start_index];
+        buf->start_index = (buf->start_index + 1) % BUFFER_SIZE;
+        --(buf->num_messages);
+    }
+
+    // reenable interrupt
+    sercom->USART_INT.SERCOM_INTENSET = SERCOM_USART_INT_INTENSET_RXC_Msk;
 
     return size;
 }
