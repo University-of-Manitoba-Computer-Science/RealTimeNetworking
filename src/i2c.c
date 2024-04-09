@@ -6,8 +6,9 @@ void clkI2C(){
 	//36.5.1 I/O Lines
 	//See portIni	
 	
-	//IC2 likes to run at 100-400khz so we divide 48MHz/240 = 200Khz
-	GCLK_REGS->GCLK_GENCTRL[5] = GCLK_GENCTRL_DIV(24) | GCLK_GENCTRL_SRC_DFLL | GCLK_GENCTRL_GENEN_Msk;
+	//IC2 likes to run at 100-400khz so we divide 48MHz/240 = 200Khz <--- too fast
+	//data sheet says 100khz max for slow mode so 48MHZ/480 = 100Khz
+	GCLK_REGS->GCLK_GENCTRL[5] = GCLK_GENCTRL_DIV(480) | GCLK_GENCTRL_SRC_DFLL | GCLK_GENCTRL_GENEN_Msk;
 
 	//36.5.3 Clocks
 	//Our I2C is connected to SERCOM2 so we need to configure the clocks for that
