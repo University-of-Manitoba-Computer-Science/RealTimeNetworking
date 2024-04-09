@@ -1,6 +1,7 @@
 #include <sam.h>
 
 #include "can.h"
+#include "dcc_stdio.h"
 #include "heart.h"
 #include "uart.h"
 
@@ -20,8 +21,7 @@
 int main(void)
 {
 #ifndef NDEBUG
-    for (int i = 0; i < 100000; i++)
-        ;
+    for (int i = 0; i < 100000; i++);
 #endif
 
     // enable cache
@@ -37,8 +37,8 @@ int main(void)
     PM_REGS->PM_SLEEPCFG |= PM_SLEEPCFG_SLEEPMODE_IDLE;
 
     heartInit();
-    uint16_t tmp = CAN_ID + 1; // TODO choose ids to accept
-    canInit(&tmp, 1);
+    uint16_t rcv_id = CAN_ID + 1; // TODO choose ids to accept
+    canInit(&rcv_id, 1);
     portUART();
     clkUART();
     initUART();
@@ -48,30 +48,29 @@ int main(void)
     __enable_irq();
 
     // sleep until we have an interrupt
-    while (1)
-    {
+    rxMode(SERCOM0_REGS); // SERCOM0 does not conflict with CAN0
+    while (1) {
         __WFI();
-        if ((get_ticks() % 1000) == 0)
-        {
+        if ((get_ticks() % 1000) == 0) {
             // check for waiting CAN data and send it over RS485
             int can_len = 0;
-            while (can_len != -1)
-            {
+            while (can_len != -1) {
                 uint8_t rx_data[MAX_RX_DATA_LEN];
                 can_len = dequeue_message(rx_data, MAX_RX_DATA_LEN);
 
-                if (can_len > 0)
-                {
+                if (can_len > 0) {
                     txUARTArr(SERCOM0_REGS, rx_data, can_len);
                 }
             }
 
-            while (SERCOM0_REGS->USART_INT.SERCOM_INTFLAG &
-                   SERCOM_USART_INT_INTFLAG_TXC_Msk)
-            {
-                uint8_t data = rxUART(SERCOM0_REGS);
+            int uart_len = 1;
+            while (uart_len != 0) {
+                uint8_t rx_data[MAX_RX_DATA_LEN];
+                uart_len = rxUART(SERCOM4_REGS, rx_data, MAX_RX_DATA_LEN);
 
-                queue_message(CAN_ID, &data, 1);
+                if (uart_len > 0) {
+                    queue_message(CAN_ID, &rx_data, uart_len);
+                }
             }
         }
     }
