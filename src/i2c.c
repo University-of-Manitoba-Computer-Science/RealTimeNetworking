@@ -327,3 +327,11 @@ void sampleXL(){
 	curr = (curr+1)%WINDOW_SIZE;
 */
 }//sampleXl
+
+
+// the sequential read is borked I should read x y and z individually
+void getGyro(unsigned char* buff){
+	
+	initRead((OUT_X_XL_START|AUTO_INC_Msk),6,buff);
+
+}

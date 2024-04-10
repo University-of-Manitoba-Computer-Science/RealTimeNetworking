@@ -2,7 +2,7 @@
 #include "sam.h"
 #include "same51j20a.h"
 
-// hardware setup: 5V power; PA11 is our output (pwm); PB14 is our input (ext input). I/O can change to another pin as long as it has same functions.
+// hardware setup: 5V power; PA11 is our output (pwm); PB07is our input (ext input). I/O can change to another pin as long as it has same functions.
 
 // There is no output adjusting done. You'll need to add that and anything else you need for messaging, matching RPM (a PID?), and...
 
@@ -62,9 +62,9 @@ void fanInit()
 void rpmInit()
 {
   // RPM input, with a pull-up (using internal but we should use an external 1K for a less glitchy signal)
-  PORT_REGS->GROUP[1].PORT_DIRCLR = PORT_PB14;
-  PORT_REGS->GROUP[1].PORT_PINCFG[14] = PORT_PINCFG_PMUXEN_Msk | PORT_PINCFG_PULLEN_Msk;
-  PORT_REGS->GROUP[1].PORT_OUTSET = PORT_PB14;
+  PORT_REGS->GROUP[1].PORT_DIRCLR = PORT_PB07;
+  PORT_REGS->GROUP[1].PORT_PINCFG[7] = PORT_PINCFG_PMUXEN_Msk | PORT_PINCFG_PULLEN_Msk;
+  PORT_REGS->GROUP[1].PORT_OUTSET = PORT_PB07;
 
   //setup the event system
   MCLK_REGS->MCLK_APBBMASK |= MCLK_APBBMASK_EVSYS_Msk;

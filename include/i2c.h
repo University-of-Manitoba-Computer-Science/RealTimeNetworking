@@ -4,7 +4,7 @@
 #include "same51j20a.h"
 
 
-#define I2C_BAUD (1U)
+#define I2C_BAUD (2U)
 #define WRITE false
 #define READ true
 
@@ -36,3 +36,4 @@ void initRead(uint8_t addr, size_t bytes,volatile unsigned char *data);
 void accelOnlyMode();
 void sampleXL();
 
+void getGyro(unsigned char* buff);

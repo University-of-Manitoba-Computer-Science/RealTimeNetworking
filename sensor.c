@@ -5,6 +5,7 @@
 #include "heart.h"
 #include "i2c.h"
 #include "uart.h"
+#include "fan.h"
 
 #define DEBUG_WAIT 10000000UL
 // setup our heartbeat to be 1ms: we overflow at 1ms intervals with a 120MHz
@@ -20,6 +21,7 @@
 // NOTE: this overflows every ~50 days, so I'm not going to care here...
 // volatile uint32_t msCount = 0;
 volatile uint32_t secCount = 0;
+static unsigned char i2c_rx_buff[READ_BUF_SIZE];
 
 void initAllPorts()
 {
@@ -49,6 +51,8 @@ void initAll()
     initI2C();
     initButton();
     initUART();
+    fanInit();
+    rpmInit();
 
     // init gyro stuff
     // accelOnlyMode();
@@ -107,16 +111,18 @@ int main(void)
 #endif
 
     PORT_REGS->GROUP[0].PORT_OUTTGL = PORT_PA14;
+    accelOnlyMode();
     // sleep until we have an interrupt
     while (1) {
         __WFI();
         if ((get_ticks() % LED_FLASH_MS) == 0) {
-            
+            secCount ++;
+            updateOutput((uint8_t)secCount);
             PORT_REGS->GROUP[0].PORT_OUTTGL = PORT_PA14;
-            accelOnlyMode();
-        
-            #ifndef NDEBUG
+            getGyro(i2c_rx_buff);
             
+            #ifndef NDEBUG
+                dbg_write_u8(i2c_rx_buff,1);
             #endif
         }
     }
