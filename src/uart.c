@@ -57,8 +57,8 @@ void clkUART(sercom_registers_t *sercom)
     // to get 1mbps transmit speed)
     GCLK_REGS->GCLK_GENCTRL[4] =
         GCLK_GENCTRL_DIV(3) | GCLK_GENCTRL_SRC_DFLL | GCLK_GENCTRL_GENEN_Msk;
-    
-        if(sercom == SERCOM0_REGS){
+
+    if (sercom == SERCOM0_REGS) {
         GCLK_REGS->GCLK_PCHCTRL[SERCOM0_GCLK_ID_CORE] =
             GCLK_PCHCTRL_GEN_GCLK4 | GCLK_PCHCTRL_CHEN_Msk;
 
@@ -67,19 +67,15 @@ void clkUART(sercom_registers_t *sercom)
             // wait for sync
         } // while
         MCLK_REGS->MCLK_APBAMASK |= MCLK_APBAMASK_SERCOM0_Msk;
-        }
-        else if(sercom == SERCOM4_REGS){
-
-            GCLK_REGS->GCLK_PCHCTRL[SERCOM4_GCLK_ID_CORE] =
+    } else if (sercom == SERCOM4_REGS) {
+        GCLK_REGS->GCLK_PCHCTRL[SERCOM4_GCLK_ID_CORE] =
             GCLK_PCHCTRL_GEN_GCLK4 | GCLK_PCHCTRL_CHEN_Msk;
-            while ((GCLK_REGS->GCLK_PCHCTRL[SERCOM4_GCLK_ID_CORE] &
+        while ((GCLK_REGS->GCLK_PCHCTRL[SERCOM4_GCLK_ID_CORE] &
                 GCLK_PCHCTRL_CHEN_Msk) != GCLK_PCHCTRL_CHEN_Msk) {
             // wait for sync
-            } // while
-            MCLK_REGS->MCLK_APBDMASK |= MCLK_APBDMASK_SERCOM4_Msk;
-        }
-   
-    
+        } // while
+        MCLK_REGS->MCLK_APBDMASK |= MCLK_APBDMASK_SERCOM4_Msk;
+    }
 
 } // clkUART
 
@@ -87,9 +83,12 @@ void initUART(sercom_registers_t *sercom)
 {
     // The following comes from section 34.6.2.1
     // disable the USART sercom
-    SERCOM0_REGS->USART_INT.SERCOM_CTRLA =
-        /*  */ SERCOM_USART_INT_CTRLA_ENABLE(0);
-    SERCOM4_REGS->USART_INT.SERCOM_CTRLA = SERCOM_USART_INT_CTRLA_ENABLE(0);
+    if (sercom == SERCOM0_REGS) {
+        SERCOM0_REGS->USART_INT.SERCOM_CTRLA = SERCOM_USART_INT_CTRLA_ENABLE(0);
+    }
+    if (sercom == SERCOM4_REGS) {
+        SERCOM4_REGS->USART_INT.SERCOM_CTRLA = SERCOM_USART_INT_CTRLA_ENABLE(0);
+    }
 
     // todo: I have changed how TXP0 works along with RXP0 to select PAD1 for RX
     // as per the spec, but I need to make sure the TXP0 mode change from 0x0 to
@@ -101,9 +100,9 @@ void initUART(sercom_registers_t *sercom)
 
     // The following sets up CTRLB as follows
     sercom->USART_INT.SERCOM_CTRLB = SERCOM_USART_INT_CTRLB_CHSIZE_8_BIT |
-                                           SERCOM_USART_INT_CTRLB_SBMODE_1_BIT |
-                                           SERCOM_USART_INT_CTRLB_TXEN_Msk |
-                                           SERCOM_USART_INT_CTRLB_RXEN_Msk;
+                                     SERCOM_USART_INT_CTRLB_SBMODE_1_BIT |
+                                     SERCOM_USART_INT_CTRLB_TXEN_Msk |
+                                     SERCOM_USART_INT_CTRLB_RXEN_Msk;
     while ((sercom->USART_INT.SERCOM_SYNCBUSY &
             SERCOM_USART_INT_SYNCBUSY_CTRLB_Msk) != 0) {
         // Wait for CTRLB enable
@@ -116,28 +115,34 @@ void initUART(sercom_registers_t *sercom)
     // enable transmit and receive
 
     // Enable sercom
-    sercom->USART_INT.SERCOM_CTRLA =
-        SERCOM_USART_INT_CTRLA_MODE_USART_INT_CLK |
-        SERCOM_USART_INT_CTRLA_RXPO(SERCOM0_RX_MODE) |
-        SERCOM_USART_INT_CTRLA_TXPO(SERCOM0_TX_MODE) |
-        SERCOM_USART_INT_CTRLA_DORD_Msk | SERCOM_USART_INT_CTRLA_ENABLE_Msk;
-    while ((SERCOM0_REGS->USART_INT.SERCOM_SYNCBUSY &
+    if (sercom == SERCOM0_REGS) {
+        sercom->USART_INT.SERCOM_CTRLA =
+            SERCOM_USART_INT_CTRLA_MODE_USART_INT_CLK |
+            SERCOM_USART_INT_CTRLA_RXPO(SERCOM0_RX_MODE) |
+            SERCOM_USART_INT_CTRLA_TXPO(SERCOM0_TX_MODE) |
+            SERCOM_USART_INT_CTRLA_DORD_Msk | SERCOM_USART_INT_CTRLA_ENABLE_Msk;
+    } else if (sercom == SERCOM4_REGS) {
+        sercom->USART_INT.SERCOM_CTRLA =
+            SERCOM_USART_INT_CTRLA_MODE_USART_INT_CLK |
+            SERCOM_USART_INT_CTRLA_RXPO(SERCOM4_RX_MODE) |
+            SERCOM_USART_INT_CTRLA_TXPO(SERCOM4_TX_MODE) |
+            SERCOM_USART_INT_CTRLA_DORD_Msk | SERCOM_USART_INT_CTRLA_ENABLE_Msk;
+    }
+    while ((sercom->USART_INT.SERCOM_SYNCBUSY &
             SERCOM_USART_INT_SYNCBUSY_ENABLE_Msk) != 0) {
         // Wait for enable
     } // while
-
 
 } // initUART
 
 void portUART(sercom_registers_t *sercom)
 {
-    
-    if(sercom == SERCOM0_REGS){
-         // USART sercom0 on PORT_PA8
+    if (sercom == SERCOM0_REGS) {
+        // USART sercom0 on PORT_PA8
         PORT_REGS->GROUP[0].PORT_PINCFG[8] |= PORT_PINCFG_PMUXEN_Msk;
         PORT_REGS->GROUP[0].PORT_PMUX[4]   |= PORT_PMUX_PMUXE_C;
 
-         // USART sercom0 on PORT_PA9
+        // USART sercom0 on PORT_PA9
         PORT_REGS->GROUP[0].PORT_PINCFG[9] |= PORT_PINCFG_PMUXEN_Msk;
         PORT_REGS->GROUP[0].PORT_PMUX[4]   |= PORT_PMUX_PMUXO_C;
 
@@ -149,10 +154,8 @@ void portUART(sercom_registers_t *sercom)
         PORT_REGS->GROUP[1].PORT_DIRSET = PORT_PB14;
         PORT_REGS->GROUP[1].PORT_OUTSET = PORT_PB14;
 
-
-    }
-    else if(sercom == SERCOM4_REGS){
-            // USART SERCOM4 on PORT_PA12
+    } else if (sercom == SERCOM4_REGS) {
+        // USART SERCOM4 on PORT_PA12
         PORT_REGS->GROUP[1].PORT_PINCFG[12] |= PORT_PINCFG_PMUXEN_Msk;
         PORT_REGS->GROUP[1].PORT_PMUX[6]    |= PORT_PMUX_PMUXE_C;
 
@@ -167,14 +170,7 @@ void portUART(sercom_registers_t *sercom)
         // P18 for RE FOR PAD 1
         PORT_REGS->GROUP[0].PORT_DIRSET = PORT_PA18;
         PORT_REGS->GROUP[0].PORT_OUTSET = PORT_PA18;
-
-
     }
-   
-
-
-
-
 
 } // portUART
 
