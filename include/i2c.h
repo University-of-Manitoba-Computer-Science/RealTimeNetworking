@@ -49,7 +49,8 @@ void gyroOnMode();
 void accelOffMode();
 void gyroOffMode();
 
-void sampleXL();
+void sampleXL(uint16_t* outbuff);
+void sampleGyro(uint16_t* outbuff);
 
 void getGyro(unsigned char* buff);
 void getXL(unsigned char* buff);

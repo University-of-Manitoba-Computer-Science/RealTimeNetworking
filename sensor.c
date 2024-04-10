@@ -15,7 +15,7 @@
 // #define MS_TICKS 120000UL
 //  number of millisecond between LED flashes
 #define LED_FLASH_MS  1000UL
-#define GYRO_CHECK_MS 1000UL
+#define GYRO_CHECK_MS 200UL
 
 
 // NOTE: this overflows every ~50 days, so I'm not going to care here...
@@ -23,7 +23,8 @@
 volatile uint32_t secCount = 0;
 static unsigned char i2c_rx_buff[READ_BUF_SIZE];
 
-
+uint16_t xl_xyz_buff[3];
+uint16_t gyro_xyz_buff[3];
 
 void flash();
 void on();
@@ -61,6 +62,32 @@ void on(){
 
 }
 
+
+void sampleG();
+void sampleX();
+void (*sample)() = &sampleG;
+
+void sampleG(){
+
+    if ((get_ticks() % GYRO_CHECK_MS) == 0) {
+
+        sampleGyro(gyro_xyz_buff);
+        
+    }
+
+    sample = &sampleX;
+
+}
+
+void sampleX(){
+
+        if ((get_ticks() % GYRO_CHECK_MS) == 0) {
+
+        sampleXL(xl_xyz_buff);
+        
+    }
+    sample = &sampleG;
+}
 
 void initAllPorts()
 {
@@ -156,6 +183,19 @@ int main(void)
     while (1) {
         __WFI();
         led();
+        sample();
+        #ifndef NDEBUG
+            if((get_ticks() % LED_FLASH_MS) == 0){
+                dbg_write_str("Gyro x y z:");
+                dbg_write_u16(gyro_xyz_buff,3);
+                dbg_write_str(" \n");\
+                
+                dbg_write_str("XL x y z:");
+                dbg_write_u16(xl_xyz_buff,3);
+                dbg_write_str(" \n");
+            }
+        #endif  
+
         
     }
     return 0;
