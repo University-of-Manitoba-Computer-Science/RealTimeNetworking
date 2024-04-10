@@ -66,7 +66,9 @@ int main(void)
                 can_len = dequeue_message(rx_data, MAX_RX_DATA_LEN);
 
                 if (can_len > 0) {
+                    txMode(SERCOM0_REGS);
                     txUARTArr(SERCOM0_REGS, rx_data, can_len);
+                    rxMode(SERCOM0_REGS);
                 }
             }
 
@@ -74,7 +76,7 @@ int main(void)
             int uart_len = 1;
             while (uart_len != 0) {
                 uint8_t rx_data[MAX_RX_DATA_LEN];
-                uart_len = rxUART(SERCOM4_REGS, rx_data, MAX_RX_DATA_LEN);
+                uart_len = rxUART(SERCOM0_REGS, rx_data, MAX_RX_DATA_LEN);
 
                 if (uart_len > 0) {
                     queue_message(CAN_ID, rx_data, uart_len);
