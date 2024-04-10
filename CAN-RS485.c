@@ -1,21 +1,23 @@
 #include <sam.h>
 
 #include "can.h"
+#include "dcc_stdio.h"
 #include "heart.h"
 #include "uart.h"
 
 #define MAX_RX_DATA_LEN 16
 
-#define CAN_ID 0x200
+#define CAN_ID    0x200
+#define CAN_RX_ID 0x201
 
 // NOTE: this overflows every ~50 days, so I'm not going to care here...
-volatile uint32_t msCount = 0;
+// volatile uint32_t msCount = 0;
 
 // Fires every 1ms
-void SysTick_Handler()
-{
-    msCount++;
-}
+// void SysTick_Handler()
+// {
+//     msCount++;
+// }
 
 int main(void)
 {
@@ -35,12 +37,18 @@ int main(void)
     // sleep to idle (wake on interrupts)
     PM_REGS->PM_SLEEPCFG |= PM_SLEEPCFG_SLEEPMODE_IDLE;
 
+    // setup heart
     heartInit();
-    uint16_t tmp = CAN_ID + 1; // TODO choose ids to accept
-    canInit(&tmp, 1);
+
+    // setup CAN
+    uint16_t rcv_id = CAN_RX_ID;
+    canInit(&rcv_id, 1);
+
+    // setup RS-485
     portUART();
     clkUART();
     initUART();
+    rxMode(SERCOM0_REGS); // enable SERCOM0 reading
 
     // we want interrupts!
     __enable_irq();
@@ -48,7 +56,9 @@ int main(void)
     // sleep until we have an interrupt
     while (1) {
         __WFI();
-        if ((msCount % 1000) == 0) {
+
+        // forward messages once every second
+        if ((get_ticks() % 1000) == 0) {
             // check for waiting CAN data and send it over RS485
             int can_len = 0;
             while (can_len != -1) {
@@ -60,7 +70,16 @@ int main(void)
                 }
             }
 
-            // TODO check for waiting RS485 data and send it over CAN
+            // check for waiting RS-485 data and send it over CAN
+            int uart_len = 1;
+            while (uart_len != 0) {
+                uint8_t rx_data[MAX_RX_DATA_LEN];
+                uart_len = rxUART(SERCOM4_REGS, rx_data, MAX_RX_DATA_LEN);
+
+                if (uart_len > 0) {
+                    queue_message(CAN_ID, rx_data, uart_len);
+                }
+            }
         }
     }
     return 0;
