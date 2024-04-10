@@ -15,7 +15,7 @@
 //  number of millisecond between LED flashes
 #define LED_FLASH_MS  1000UL
 #define GYRO_CHECK_MS 1000UL
-void heartInitLocal();
+
 
 // NOTE: this overflows every ~50 days, so I'm not going to care here...
 // volatile uint32_t msCount = 0;
@@ -54,31 +54,7 @@ void initAll()
     // accelOnlyMode();
 }
 
-void heartInitLocal()
-{
-    // setup the main clock/CPU clock to run at 2MHZ
 
-    // define our main generic clock, which drives everything, to be 120MHz from
-    // the PLL
-    MCLK_REGS->MCLK_CPUDIV = MCLK_CPUDIV_DIV_DIV1;
-    while ((MCLK_REGS->MCLK_INTFLAG & MCLK_INTFLAG_CKRDY_Msk) !=
-           MCLK_INTFLAG_CKRDY_Msk); /* Wait for main clock to be ready */
-
-    GCLK_REGS->GCLK_GENCTRL[0] =
-        GCLK_GENCTRL_DIV(24) | GCLK_GENCTRL_SRC_DFLL | GCLK_GENCTRL_GENEN_Msk;
-    while ((GCLK_REGS->GCLK_SYNCBUSY & GCLK_SYNCBUSY_GENCTRL_GCLK0) ==
-           GCLK_SYNCBUSY_GENCTRL_GCLK0); /* Wait for synchronization */
-
-    // have to enable the interrupt line in the system level REG
-    NVIC_EnableIRQ(SysTick_IRQn);
-
-    SysTick_Config(MS_TICKS);
-}
-
-// Fires every 1ms
-// void SysTick_Handler(){
-//   msCount++;
-// }
 
 // ISR for  external interrupt 15, add processing code as required...
 void EIC_EXTINT_15_Handler()
@@ -135,25 +111,13 @@ int main(void)
     while (1) {
         __WFI();
         if ((get_ticks() % LED_FLASH_MS) == 0) {
-            uint8_t test[5] = {'a', 'b', 'c', 'd', 'e'};
-            // txUART(SERCOM0_REGS ,secCount);
-
-            txUARTArr(SERCOM0_REGS, test, 5);
-
-            rxMode(SERCOM0_REGS);
-            secCount                        = secCount + 1;
+            
             PORT_REGS->GROUP[0].PORT_OUTTGL = PORT_PA14;
-            /*       #ifndef NDEBUG
-                    dbg_write_u32(&secCount,1);
-                  #endif
-             */
-#ifndef NDEBUG
-            rxMode(SERCOM4_REGS);
-            unsigned char rxCount;
-            if (rxUART(SERCOM4_REGS, &rxCount, 1))
-                dbg_write_u8(&rxCount, 1);
-            dbg_write_u8(&rxCount, 1);
-#endif
+            accelOnlyMode();
+        
+            #ifndef NDEBUG
+            
+            #endif
         }
     }
     return 0;

@@ -1,9 +1,5 @@
 #include <stdbool.h>
-<<<<<<< HEAD
-#include "same51j20a.h"
-=======
 #include <stddef.h>
->>>>>>> origin
 
 #include "sam.h"
 
