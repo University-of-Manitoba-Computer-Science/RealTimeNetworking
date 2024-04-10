@@ -10,6 +10,8 @@ void fanInit();
 
 void rpmInit();
 
+volatile uint16_t getRpm();
+
 // clock is setup to ensure that it never overflows within our RPM range; an overflow indicates no pulse, or that the fan has stopped
 void TCC0_OTHER_Handler();
 

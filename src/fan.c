@@ -25,7 +25,14 @@ volatile uint16_t fanRPM = 0;
 
 void updateOutput(uint8_t dutyCycle)
 {
+  //TC1_REGS->COUNT8.TC_CC[1] = 0x18; // I DO NOT want sticktion so break it
   TC1_REGS->COUNT8.TC_CC[1] = dutyCycle;
+}
+
+volatile uint16_t getRpm(){
+
+  return fanRPM;
+
 }
 
 void fanInit()

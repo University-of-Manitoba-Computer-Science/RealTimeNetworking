@@ -23,11 +23,50 @@
 volatile uint32_t secCount = 0;
 static unsigned char i2c_rx_buff[READ_BUF_SIZE];
 
+
+
+void flash();
+void on();
+void off();
+
+void (*led)() = &flash;
+
+void flash(){
+
+    if ((get_ticks() % LED_FLASH_MS) == 0) {
+
+        PORT_REGS->GROUP[0].PORT_OUTTGL = PORT_PA14;
+
+    }
+
+}
+
+void off(){
+
+    if ((get_ticks() % LED_FLASH_MS) == 0) {
+
+        PORT_REGS->GROUP[0].PORT_OUTSET = PORT_PA14;
+        
+    }
+
+}
+
+void on(){
+
+    if ((get_ticks() % LED_FLASH_MS) == 0) {
+
+        PORT_REGS->GROUP[0].PORT_OUTCLR = PORT_PA14;
+        
+    }
+
+}
+
+
 void initAllPorts()
 {
     // LED output
     PORT_REGS->GROUP[0].PORT_DIRSET = PORT_PA14;
-    PORT_REGS->GROUP[0].PORT_OUTSET = PORT_PA14;
+    //PORT_REGS->GROUP[0].PORT_OUTSET = PORT_PA14;
 
     port15Init();  // init button ports
     sercom2Init(); // init sercom2 -> i2c ports
@@ -111,20 +150,13 @@ int main(void)
 #endif
 
     PORT_REGS->GROUP[0].PORT_OUTTGL = PORT_PA14;
-    accelOnlyMode();
+    accelOnMode();
+    gyroOnMode();
     // sleep until we have an interrupt
     while (1) {
         __WFI();
-        if ((get_ticks() % LED_FLASH_MS) == 0) {
-            secCount ++;
-            updateOutput((uint8_t)secCount);
-            PORT_REGS->GROUP[0].PORT_OUTTGL = PORT_PA14;
-            getGyro(i2c_rx_buff);
-            
-            #ifndef NDEBUG
-                dbg_write_u8(i2c_rx_buff,1);
-            #endif
-        }
+        led();
+        
     }
     return 0;
 }

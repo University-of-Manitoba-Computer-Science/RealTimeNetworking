@@ -268,7 +268,7 @@ void initWrite(uint8_t addr, size_t bytes,volatile unsigned char *data){
 	count = 0;
 }//initWrite
 
-void accelOnlyMode(){
+void accelOnMode(){
 
 	//for some reason unknown to me you have to write 
 	//this control register first or else writting
@@ -286,6 +286,71 @@ void accelOnlyMode(){
 
 	writeBuffer[0] = CTRL_REG6_XL_50HZ_Msk;
 	initWrite(CTRL_REG6_XL,1,writeBuffer);
+
+}//accelOnlyMode
+
+
+void gyroOnMode(){
+
+	//for some reason unknown to me you have to write 
+	//this control register first or else writting
+	//the next will get rid of the aut inc bit
+	//big shrug
+	unsigned char writeBuffer[WRITE_BUF_SIZE];
+	writeBuffer[0] = CTRL_REG8_IF_ADD_INC_Msk;
+	initWrite(CTRL_REG8,1,writeBuffer);
+	
+	while((SERCOM2_REGS->I2CM.SERCOM_INTFLAG) == 0U){
+		
+		//wait for sync of SYNCBUSY.SYSOP to ensure we are not doing anything on the bus
+
+	}//while
+
+	writeBuffer[0] = CTRL_REG1_G_5HZ_Msk;
+	initWrite(CTRL_REG1_G,1,writeBuffer);
+
+}//accelOnlyMode
+
+void accelOffMode(){
+
+	//for some reason unknown to me you have to write 
+	//this control register first or else writting
+	//the next will get rid of the aut inc bit
+	//big shrug
+	unsigned char writeBuffer[WRITE_BUF_SIZE];
+	writeBuffer[0] = CTRL_REG8_IF_ADD_INC_Msk;
+	initWrite(CTRL_REG8,1,writeBuffer);
+	
+	while((SERCOM2_REGS->I2CM.SERCOM_INTFLAG) == 0U){
+		
+		//wait for sync of SYNCBUSY.SYSOP to ensure we are not doing anything on the bus
+
+	}//while
+
+	writeBuffer[0] = 0x00;
+	initWrite(CTRL_REG6_XL,1,writeBuffer);
+
+}//accelOnlyMode
+
+
+void gyroOffMode(){
+
+	//for some reason unknown to me you have to write 
+	//this control register first or else writting
+	//the next will get rid of the aut inc bit
+	//big shrug
+	unsigned char writeBuffer[WRITE_BUF_SIZE];
+	writeBuffer[0] = CTRL_REG8_IF_ADD_INC_Msk;
+	initWrite(CTRL_REG8,1,writeBuffer);
+	
+	while((SERCOM2_REGS->I2CM.SERCOM_INTFLAG) == 0U){
+		
+		//wait for sync of SYNCBUSY.SYSOP to ensure we are not doing anything on the bus
+
+	}//while
+
+	writeBuffer[0] = 0x00;
+	initWrite(CTRL_REG1_G,1,writeBuffer);
 
 }//accelOnlyMode
 
@@ -331,6 +396,13 @@ void sampleXL(){
 
 // the sequential read is borked I should read x y and z individually
 void getGyro(unsigned char* buff){
+	
+	initRead((OUT_X_G_START|AUTO_INC_Msk),6,buff);
+
+}
+
+// the sequential read is borked I should read x y and z individually
+void getXL(unsigned char* buff){
 	
 	initRead((OUT_X_XL_START|AUTO_INC_Msk),6,buff);
 
