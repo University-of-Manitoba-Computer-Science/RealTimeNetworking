@@ -13,9 +13,9 @@
 #define SERCOM4_RX_MODE 0x1
 #define TX_DELAY_MS     4000UL
 
-void clkUART();
-void initUART();
-void portUART();
+void clkUART(sercom_registers_t *sercom);
+void initUART(sercom_registers_t *sercom);
+void portUART(sercom_registers_t *sercom);
 
 void rxMode(sercom_registers_t *);
 void txMode(sercom_registers_t *);
