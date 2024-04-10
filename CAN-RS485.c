@@ -45,9 +45,9 @@ int main(void)
     canInit(&rcv_id, 1);
 
     // setup RS-485
-    portUART();
-    clkUART();
-    initUART();
+    portUART(SERCOM0_REGS);
+    clkUART(SERCOM0_REGS);
+    initUART(SERCOM0_REGS);
     rxMode(SERCOM0_REGS); // enable SERCOM0 reading
 
     // we want interrupts!
