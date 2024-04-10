@@ -2,6 +2,7 @@
 #include <stdint.h>
 
 #define NUM_SAMPLES 16
+#define EXTINT14_MASK (0x4000) // ie 1 << 14
 
 void updateOutput(uint8_t dutyCycle);
 

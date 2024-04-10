@@ -77,10 +77,7 @@ void heartInitLocal(){
 }
 
 
-// Fires every 1ms
-void SysTick_Handler(){
-  msCount++;
-}
+
 
 // ISR for  external interrupt 15, add processing code as required...
 void EIC_EXTINT_15_Handler(){
@@ -136,7 +133,7 @@ int main(void){
     __WFI();
     if ((msCount % LED_FLASH_MS) == 0){
       unsigned char test[5] = {'a','b','c','d','e'};
-      accelOnlyMode();
+      //accelOnlyMode();
       secCount = secCount + 1;
       PORT_REGS->GROUP[0].PORT_OUTTGL = PORT_PA14;
 /*       #ifndef NDEBUG

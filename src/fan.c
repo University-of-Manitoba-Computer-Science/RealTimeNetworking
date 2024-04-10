@@ -1,4 +1,6 @@
+#include "fan.h"
 #include "sam.h"
+#include "same51j20a.h"
 
 // hardware setup: 5V power; PA11 is our output (pwm); PB14 is our input (ext input). I/O can change to another pin as long as it has same functions.
 
@@ -16,25 +18,10 @@
 #define START_PULSE 1
 #define END_PULSE 3
 
-// NOTE: this overflows every ~50 days, so I'm not going to care here...
-volatile uint32_t msCount = 0;
 
 // values updated inside an interrupt and needed outside 
 volatile uint16_t fanRPM = 0;
 
-void heartInit()
-{
-  // have to enable the interrupt line in the system level REG
-  NVIC_EnableIRQ(SysTick_IRQn);
-
-  SysTick_Config(MS_TICKS);
-}
-
-// Fires every 1ms
-void SysTick_Handler()
-{
-  msCount++;
-}
 
 void updateOutput(uint8_t dutyCycle)
 {
@@ -89,6 +76,7 @@ void rpmInit()
   // RPM input goes to an external interrupt, with events being generated for each rising edge
   PORT_REGS->GROUP[0].PORT_PMUX[7] = PORT_PMUX_PMUXE_A;
   EIC_REGS->EIC_CONFIG[1] = EIC_CONFIG_SENSE6_RISE;
+  //Use This? EIC_EXTINT_14_IRQn
   EIC_REGS->EIC_EVCTRL = EXTINT14_MASK;
   EIC_REGS->EIC_CTRLA = EIC_CTRLA_CKSEL_CLK_ULP32K | EIC_CTRLA_ENABLE_Msk;
 
@@ -166,38 +154,5 @@ void TCC0_MC0_Handler()
     // now we can use the last edge as the first for our next sample!
     pulseCount = START_PULSE;
     TCC0_REGS->TCC_COUNT = 0;
-  }
-}
-
-int main (void)
-{
-#ifndef NDEBUG
-  for (int i=0; i<100000; i++)
-  ;
-  // include the following line if you want to simulate the 'standard' stop on entry behaviour
-  // WARNING: this will always breakpoint, even when not in a debugger. Meaning that your code will never execute if outside a debugger.
-  //__BKPT(0);
-#endif
-
-  // sleep to idle (wake on interrupts)
-  PM_REGS->PM_SLEEPCFG = PM_SLEEPCFG_SLEEPMODE_IDLE;
-  
-  heartInit();
-
-  // LED output
-  PORT_REGS->GROUP[0].PORT_DIRSET = PORT_PA14;
-  PORT_REGS->GROUP[0].PORT_OUTSET = PORT_PA14;
-  
-  // we want interrupts!
-  __enable_irq();
-
-  fanInit();
-  rpmInit();
-  updateOutput(0);
-
-  // sleep until we have an interrupt
-  while (1) 
-  {
-    __WFI();
   }
 }
