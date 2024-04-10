@@ -37,7 +37,7 @@ void flash(){
     if ((get_ticks() % LED_FLASH_MS) == 0) {
 
         PORT_REGS->GROUP[0].PORT_OUTTGL = PORT_PA14;
-
+        updateOutput(0x11);
     }
 
 }
@@ -47,7 +47,7 @@ void off(){
     if ((get_ticks() % LED_FLASH_MS) == 0) {
 
         PORT_REGS->GROUP[0].PORT_OUTSET = PORT_PA14;
-        
+        updateOutput(0x00);
     }
 
 }
@@ -57,7 +57,7 @@ void on(){
     if ((get_ticks() % LED_FLASH_MS) == 0) {
 
         PORT_REGS->GROUP[0].PORT_OUTCLR = PORT_PA14;
-        
+        updateOutput(0x7F);
     }
 
 }
@@ -134,13 +134,6 @@ void EIC_EXTINT_15_Handler()
     EIC_REGS->EIC_INTFLAG |= EXTINT15_MASK;
 }
 
-void test()
-{
-    dbg_write_str("beforee");
-    PORT_REGS->GROUP[0].PORT_OUTTGL = PORT_PA14;
-    dbg_write_str("afterr");
-}
-
 int main(void)
 {
 #ifndef NDEBUG
@@ -193,6 +186,11 @@ int main(void)
                 dbg_write_str("XL x y z:");
                 dbg_write_u16(xl_xyz_buff,3);
                 dbg_write_str(" \n");
+
+/*                 uint16_t rpm = getRpm();
+                dbg_write_str("Fan rpm:");
+                dbg_write_u16(&rpm,1);
+                dbg_write_str(" \n"); */
             }
         #endif  
 
