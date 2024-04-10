@@ -5,6 +5,7 @@
 #include "heart.h"
 #include "i2c.h"
 #include "uart.h"
+#include "fan.h"
 
 #define DEBUG_WAIT 10000000UL
 // setup our heartbeat to be 1ms: we overflow at 1ms intervals with a 120MHz
@@ -14,18 +15,85 @@
 // #define MS_TICKS 120000UL
 //  number of millisecond between LED flashes
 #define LED_FLASH_MS  1000UL
-#define GYRO_CHECK_MS 1000UL
-void heartInitLocal();
+#define GYRO_CHECK_MS 200UL
+
 
 // NOTE: this overflows every ~50 days, so I'm not going to care here...
 // volatile uint32_t msCount = 0;
 volatile uint32_t secCount = 0;
+static unsigned char i2c_rx_buff[READ_BUF_SIZE];
+
+uint16_t xl_xyz_buff[3];
+uint16_t gyro_xyz_buff[3];
+
+void flash();
+void on();
+void off();
+
+void (*led)() = &flash;
+
+void flash(){
+
+    if ((get_ticks() % LED_FLASH_MS) == 0) {
+
+        PORT_REGS->GROUP[0].PORT_OUTTGL = PORT_PA14;
+
+    }
+
+}
+
+void off(){
+
+    if ((get_ticks() % LED_FLASH_MS) == 0) {
+
+        PORT_REGS->GROUP[0].PORT_OUTSET = PORT_PA14;
+        
+    }
+
+}
+
+void on(){
+
+    if ((get_ticks() % LED_FLASH_MS) == 0) {
+
+        PORT_REGS->GROUP[0].PORT_OUTCLR = PORT_PA14;
+        
+    }
+
+}
+
+
+void sampleG();
+void sampleX();
+void (*sample)() = &sampleG;
+
+void sampleG(){
+
+    if ((get_ticks() % GYRO_CHECK_MS) == 0) {
+
+        sampleGyro(gyro_xyz_buff);
+        
+    }
+
+    sample = &sampleX;
+
+}
+
+void sampleX(){
+
+        if ((get_ticks() % GYRO_CHECK_MS) == 0) {
+
+        sampleXL(xl_xyz_buff);
+        
+    }
+    sample = &sampleG;
+}
 
 void initAllPorts()
 {
     // LED output
     PORT_REGS->GROUP[0].PORT_DIRSET = PORT_PA14;
-    PORT_REGS->GROUP[0].PORT_OUTSET = PORT_PA14;
+    //PORT_REGS->GROUP[0].PORT_OUTSET = PORT_PA14;
 
     port15Init();  // init button ports
     sercom2Init(); // init sercom2 -> i2c ports
@@ -49,36 +117,14 @@ void initAll()
     initI2C();
     initButton();
     initUART();
+    fanInit();
+    rpmInit();
 
     // init gyro stuff
     // accelOnlyMode();
 }
 
-void heartInitLocal()
-{
-    // setup the main clock/CPU clock to run at 2MHZ
 
-    // define our main generic clock, which drives everything, to be 120MHz from
-    // the PLL
-    MCLK_REGS->MCLK_CPUDIV = MCLK_CPUDIV_DIV_DIV1;
-    while ((MCLK_REGS->MCLK_INTFLAG & MCLK_INTFLAG_CKRDY_Msk) !=
-           MCLK_INTFLAG_CKRDY_Msk); /* Wait for main clock to be ready */
-
-    GCLK_REGS->GCLK_GENCTRL[0] =
-        GCLK_GENCTRL_DIV(24) | GCLK_GENCTRL_SRC_DFLL | GCLK_GENCTRL_GENEN_Msk;
-    while ((GCLK_REGS->GCLK_SYNCBUSY & GCLK_SYNCBUSY_GENCTRL_GCLK0) ==
-           GCLK_SYNCBUSY_GENCTRL_GCLK0); /* Wait for synchronization */
-
-    // have to enable the interrupt line in the system level REG
-    NVIC_EnableIRQ(SysTick_IRQn);
-
-    SysTick_Config(MS_TICKS);
-}
-
-// Fires every 1ms
-// void SysTick_Handler(){
-//   msCount++;
-// }
 
 // ISR for  external interrupt 15, add processing code as required...
 void EIC_EXTINT_15_Handler()
@@ -131,30 +177,26 @@ int main(void)
 #endif
 
     PORT_REGS->GROUP[0].PORT_OUTTGL = PORT_PA14;
+    accelOnMode();
+    gyroOnMode();
     // sleep until we have an interrupt
     while (1) {
         __WFI();
-        if ((get_ticks() % LED_FLASH_MS) == 0) {
-            uint8_t test[5] = {'a', 'b', 'c', 'd', 'e'};
-            // txUART(SERCOM0_REGS ,secCount);
+        led();
+        sample();
+        #ifndef NDEBUG
+            if((get_ticks() % LED_FLASH_MS) == 0){
+                dbg_write_str("Gyro x y z:");
+                dbg_write_u16(gyro_xyz_buff,3);
+                dbg_write_str(" \n");\
+                
+                dbg_write_str("XL x y z:");
+                dbg_write_u16(xl_xyz_buff,3);
+                dbg_write_str(" \n");
+            }
+        #endif  
 
-            txUARTArr(SERCOM0_REGS, test, 5);
-
-            rxMode(SERCOM0_REGS);
-            secCount                        = secCount + 1;
-            PORT_REGS->GROUP[0].PORT_OUTTGL = PORT_PA14;
-            /*       #ifndef NDEBUG
-                    dbg_write_u32(&secCount,1);
-                  #endif
-             */
-#ifndef NDEBUG
-            rxMode(SERCOM4_REGS);
-            unsigned char rxCount;
-            if (rxUART(SERCOM4_REGS, &rxCount, 1))
-                dbg_write_u8(&rxCount, 1);
-            dbg_write_u8(&rxCount, 1);
-#endif
-        }
+        
     }
     return 0;
 }

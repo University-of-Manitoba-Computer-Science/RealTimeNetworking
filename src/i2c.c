@@ -6,10 +6,14 @@ void clkI2C(){
 	//36.5.1 I/O Lines
 	//See portIni	
 	
+	//IC2 likes to run at 100-400khz so we divide 48MHz/240 = 200Khz <--- too fast
+	//data sheet says 100khz max for slow mode so 48MHZ/480 = 100Khz
+	GCLK_REGS->GCLK_GENCTRL[5] = GCLK_GENCTRL_DIV(480) | GCLK_GENCTRL_SRC_DFLL | GCLK_GENCTRL_GENEN_Msk;
+
 	//36.5.3 Clocks
 	//Our I2C is connected to SERCOM2 so we need to configure the clocks for that
 	//We need both core and slow generic clocks enabled
-	GCLK_REGS->GCLK_PCHCTRL[SERCOM2_GCLK_ID_CORE] |= GCLK_PCHCTRL_CHEN_Msk;
+	GCLK_REGS->GCLK_PCHCTRL[SERCOM2_GCLK_ID_CORE] = GCLK_PCHCTRL_GEN_GCLK5 | GCLK_PCHCTRL_CHEN_Msk;
 	while((GCLK_REGS->GCLK_PCHCTRL[SERCOM2_GCLK_ID_CORE] & GCLK_PCHCTRL_CHEN_Msk) != GCLK_PCHCTRL_CHEN_Msk){
 		//wait for sync
 	}//while	
@@ -264,13 +268,13 @@ void initWrite(uint8_t addr, size_t bytes,volatile unsigned char *data){
 	count = 0;
 }//initWrite
 
-void accelOnlyMode(){
+void accelOnMode(){
 
 	//for some reason unknown to me you have to write 
 	//this control register first or else writting
 	//the next will get rid of the aut inc bit
 	//big shrug
-	uint16_t writeBuffer[WRITE_BUF_SIZE];
+	unsigned char writeBuffer[WRITE_BUF_SIZE];
 	writeBuffer[0] = CTRL_REG8_IF_ADD_INC_Msk;
 	initWrite(CTRL_REG8,1,writeBuffer);
 	
@@ -285,13 +289,79 @@ void accelOnlyMode(){
 
 }//accelOnlyMode
 
-void sampleXL(){
 
-/*
-	int xVal = 0;
-	int zVal = 0;
-	int yVal = 0; 
-*/
+void gyroOnMode(){
+
+	//for some reason unknown to me you have to write 
+	//this control register first or else writting
+	//the next will get rid of the aut inc bit
+	//big shrug
+	unsigned char writeBuffer[WRITE_BUF_SIZE];
+	writeBuffer[0] = CTRL_REG8_IF_ADD_INC_Msk;
+	initWrite(CTRL_REG8,1,writeBuffer);
+	
+	while((SERCOM2_REGS->I2CM.SERCOM_INTFLAG) == 0U){
+		
+		//wait for sync of SYNCBUSY.SYSOP to ensure we are not doing anything on the bus
+
+	}//while
+
+	writeBuffer[0] = CTRL_REG1_G_5HZ_Msk;
+	initWrite(CTRL_REG1_G,1,writeBuffer);
+
+}//accelOnlyMode
+
+void accelOffMode(){
+
+	//for some reason unknown to me you have to write 
+	//this control register first or else writting
+	//the next will get rid of the aut inc bit
+	//big shrug
+	unsigned char writeBuffer[WRITE_BUF_SIZE];
+	writeBuffer[0] = CTRL_REG8_IF_ADD_INC_Msk;
+	initWrite(CTRL_REG8,1,writeBuffer);
+	
+	while((SERCOM2_REGS->I2CM.SERCOM_INTFLAG) == 0U){
+		
+		//wait for sync of SYNCBUSY.SYSOP to ensure we are not doing anything on the bus
+
+	}//while
+
+	writeBuffer[0] = 0x00;
+	initWrite(CTRL_REG6_XL,1,writeBuffer);
+
+}//accelOnlyMode
+
+
+void gyroOffMode(){
+
+	//for some reason unknown to me you have to write 
+	//this control register first or else writting
+	//the next will get rid of the aut inc bit
+	//big shrug
+	unsigned char writeBuffer[WRITE_BUF_SIZE];
+	writeBuffer[0] = CTRL_REG8_IF_ADD_INC_Msk;
+	initWrite(CTRL_REG8,1,writeBuffer);
+	
+	while((SERCOM2_REGS->I2CM.SERCOM_INTFLAG) == 0U){
+		
+		//wait for sync of SYNCBUSY.SYSOP to ensure we are not doing anything on the bus
+
+	}//while
+
+	writeBuffer[0] = 0x00;
+	initWrite(CTRL_REG1_G,1,writeBuffer);
+
+}//accelOnlyMode
+
+// buffer must be of size 3 min
+void sampleXL(uint16_t* outbuff){
+
+
+	uint16_t xVal = 0;
+	uint16_t zVal = 0;
+	uint16_t yVal = 0; 
+
 	uint8_t readBuffer[READ_BUF_SIZE];
 	//get the values from the gyro and put into the read buffer
 	initRead((OUT_X_XL_START|AUTO_INC_Msk),6,readBuffer);
@@ -301,11 +371,14 @@ void sampleXL(){
 	//See LSM9DS1 pg 53 BLE value
 	
 	//for some reason readBuffer has index 5 moved to 0 and shifting everything else over. 
-	/*
-	zVal = (signed int)(((0x00ff&(readBuffer[0]))<<8)|(0x00ff&(readBuffer[5])));
-	xVal = (signed int)(((0x00ff&(readBuffer[2]))<<8)|(0x00ff&(readBuffer[1])));
-	yVal = (signed int)(((0x00ff&(readBuffer[4]))<<8)|(0x00ff&(readBuffer[3])));
-	*/
+	
+	zVal = (((0x00ff&(readBuffer[0]))<<8)|(0x00ff&(readBuffer[1])));
+	xVal = (((0x00ff&(readBuffer[2]))<<8)|(0x00ff&(readBuffer[3])));
+	yVal = (((0x00ff&(readBuffer[4]))<<8)|(0x00ff&(readBuffer[5])));
+	
+	outbuff[0] = xVal;
+	outbuff[1] = yVal;
+	outbuff[2] = zVal;
 
 	/*
 	zVal = (int)(readBuffer[0]<<8);
@@ -323,3 +396,61 @@ void sampleXL(){
 	curr = (curr+1)%WINDOW_SIZE;
 */
 }//sampleXl
+
+// buffer must be of size 3 min
+void sampleGyro(uint16_t* outbuff){
+
+
+	uint16_t xVal = 0;
+	uint16_t zVal = 0;
+	uint16_t yVal = 0; 
+
+	uint8_t readBuffer[READ_BUF_SIZE];
+	//get the values from the gyro and put into the read buffer
+	initRead((OUT_X_G_START|AUTO_INC_Msk),6,readBuffer);
+	
+	//We should be in LSB @ lower address mode and we have a little endian micro controller
+	//So we need to shift the LSB which get first from the gyro
+	//See LSM9DS1 pg 53 BLE value
+	
+	//for some reason readBuffer has index 5 moved to 0 and shifting everything else over. 
+	
+	zVal = (((0x00ff&(readBuffer[0]))<<8)|(0x00ff&(readBuffer[1])));
+	xVal = (((0x00ff&(readBuffer[2]))<<8)|(0x00ff&(readBuffer[3])));
+	yVal = (((0x00ff&(readBuffer[4]))<<8)|(0x00ff&(readBuffer[5])));
+	
+	outbuff[0] = xVal;
+	outbuff[1] = yVal;
+	outbuff[2] = zVal;
+
+	/*
+	zVal = (int)(readBuffer[0]<<8);
+	xVal = (int)(readBuffer[2]<<8);
+	yVal = (int)(readBuffer[4]<<8);
+	*/
+/*
+	xSum = xSum - xWindow[curr] + xVal;
+	ySum = ySum - yWindow[curr] + yVal;
+	zSum = zSum - zWindow[curr] + zVal;
+	xWindow[curr] = xVal;
+	yWindow[curr] = yVal;
+	zWindow[curr] = zVal;
+	
+	curr = (curr+1)%WINDOW_SIZE;
+*/
+}//sampleGyro
+
+
+// the sequential read is borked I should read x y and z individually
+void getGyro(unsigned char* buff){
+	
+	initRead((OUT_X_G_START|AUTO_INC_Msk),6,buff);
+
+}
+
+// the sequential read is borked I should read x y and z individually
+void getXL(unsigned char* buff){
+	
+	initRead((OUT_X_XL_START|AUTO_INC_Msk),6,buff);
+
+}
