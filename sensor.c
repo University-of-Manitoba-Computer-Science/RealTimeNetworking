@@ -37,7 +37,7 @@ void flash(){
     if ((get_ticks() % LED_FLASH_MS) == 0) {
 
         PORT_REGS->GROUP[0].PORT_OUTTGL = PORT_PA14;
-
+        updateOutput(0x7F);
     }
 
 }
@@ -47,7 +47,7 @@ void off(){
     if ((get_ticks() % LED_FLASH_MS) == 0) {
 
         PORT_REGS->GROUP[0].PORT_OUTSET = PORT_PA14;
-        
+        updateOutput(0x00);
     }
 
 }
@@ -57,7 +57,7 @@ void on(){
     if ((get_ticks() % LED_FLASH_MS) == 0) {
 
         PORT_REGS->GROUP[0].PORT_OUTCLR = PORT_PA14;
-        
+        updateOutput(0xFF);
     }
 
 }
