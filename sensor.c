@@ -97,7 +97,7 @@ void initAllPorts()
 
     port15Init();  // init button ports
     sercom2Init(); // init sercom2 -> i2c ports
-    portUART();    // init UART ports
+    portUART(SERCOM4_REGS);    // init UART ports
 
 } // initAllPorts
 
@@ -105,7 +105,7 @@ void initAllClks()
 {
     clkButton();
     clkI2C();
-    clkUART();
+    clkUART(SERCOM4_REGS);
 
 } // initAllClks
 
@@ -116,7 +116,7 @@ void initAll()
     initAllPorts();
     initI2C();
     initButton();
-    initUART();
+    initUART(SERCOM4_REGS);
     fanInit();
     rpmInit();
 
