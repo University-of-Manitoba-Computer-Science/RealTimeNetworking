@@ -16,6 +16,7 @@
 //  number of millisecond between LED flashes
 #define LED_FLASH_MS  1000UL
 #define GYRO_CHECK_MS 200UL
+#define COMMAND_CHECK_MS 300UL
 
 
 // NOTE: this overflows every ~50 days, so I'm not going to care here...
@@ -87,6 +88,111 @@ void sampleX(){
         
     }
     sample = &sampleG;
+}
+
+
+//decodes our message
+void decode_msg(uint8_t *msg){
+    uint8_t tmp[2];
+    if(msg[0] == (uint8_t)('g')){
+        //gyro command block
+        if(msg[1] == (uint8_t)('x')){
+            //tx gyro_xyz_buff[0]
+            tmp[0] = (uint8_t)((0XFF00&gyro_xyz_buff[0])>>8);
+            tmp[1] = (uint8_t)(0X00FF&gyro_xyz_buff[0]);
+            txUARTArr(SERCOM4_REGS, tmp, 2);
+        }
+        else if(msg[1] == (uint8_t)('y')){
+            //tx gyro_xyz_buff[1]
+            tmp[0] = (uint8_t)((0XFF00&gyro_xyz_buff[1])>>8);
+            tmp[1] = (uint8_t)(0X00FF&gyro_xyz_buff[1]);
+            txUARTArr(SERCOM4_REGS, tmp, 2);
+        }
+        else if(msg[1] == (uint8_t)('z')){
+            //tx gyro_xyz_buff[2]
+            tmp[0] = (uint8_t)((0XFF00&gyro_xyz_buff[2])>>8);
+            tmp[1] = (uint8_t)(0X00FF&gyro_xyz_buff[2]);
+            txUARTArr(SERCOM4_REGS, tmp, 2);
+        }
+
+    }
+    else if(msg[0] == (uint8_t)('x')){
+        //Accelerometer command block
+        if(msg[1] == (uint8_t)('x')){
+            //tx xl_xyz_buff[0]
+            tmp[0] = (uint8_t)((0XFF00&xl_xyz_buff[0])>>8);
+            tmp[1] = (uint8_t)(0X00FF&xl_xyz_buff[0]);
+            txUARTArr(SERCOM4_REGS, tmp, 2);
+        }
+        else if(msg[1] == (uint8_t)('y')){
+            //tx xl_xyz_buff[1]
+            tmp[0] = (uint8_t)((0XFF00&xl_xyz_buff[1])>>8);
+            tmp[1] = (uint8_t)(0X00FF&xl_xyz_buff[1]);
+            txUARTArr(SERCOM4_REGS, tmp, 2);
+        }
+        else if(msg[1] == (uint8_t)('z')){
+            //tx xl_xyz_buff[2]
+            tmp[0] = (uint8_t)((0XFF00&xl_xyz_buff[2])>>8);
+            tmp[1] = (uint8_t)(0X00FF&xl_xyz_buff[2]);
+            txUARTArr(SERCOM4_REGS, tmp, 2);
+        }
+    }
+    else if(msg[0] == (uint8_t)('f')){
+        //Fan command block
+        updateOutput(msg[1]);
+
+    }
+    else if(msg[0] == (uint8_t)('l')){
+        //Led command block
+
+        if(msg[1] == (uint8_t)('0')){
+            led = &off;
+        }
+        else if(msg[1] == (uint8_t)('1')){
+            led = &on;
+        }
+        else if(msg[1] == (uint8_t)('2')){
+            led = &flash;
+        }
+
+    }
+
+
+
+}
+
+static uint8_t extra         = 0;
+static int     extra_is_used = 0;
+
+//get our uart message and decode them to figure out what to do
+void commandHandler(){
+            int uart_len = 1;
+            if ((get_ticks() % LED_FLASH_MS) == 0) {
+                while (uart_len != 0) {
+                    uint8_t rx_data[2];
+
+                    if (extra_is_used) {
+                        // handle second byte of pair if first was unused
+                        rx_data[0] = extra;
+                        uart_len   = rxUART(SERCOM0_REGS, &extra, 1);
+                        if (uart_len > 0) {
+                            rx_data[1]    = extra;
+                            extra_is_used = 0;
+                            decode_msg(rx_data);
+                        }
+                    } else {
+                        uart_len = rxUART(SERCOM0_REGS, rx_data, 2);
+
+                        if (uart_len == 2) {
+                            decode_msg(rx_data);
+                        } else {
+                            // handle byte with a missing second byte
+                            extra         = rx_data[0];
+                            extra_is_used = 1;
+                        }
+                    }
+                }
+            }
 }
 
 void initAllPorts()
@@ -173,11 +279,20 @@ int main(void)
     accelOnMode();
     gyroOnMode();
     // sleep until we have an interrupt
+
+
+
     while (1) {
         __WFI();
         led();
         sample();
-        #ifndef NDEBUG
+        commandHandler();
+
+
+
+
+
+/*         #ifndef NDEBUG
             if((get_ticks() % LED_FLASH_MS) == 0){
                 dbg_write_str("Gyro x y z:");
                 dbg_write_u16(gyro_xyz_buff,3);
@@ -187,12 +302,12 @@ int main(void)
                 dbg_write_u16(xl_xyz_buff,3);
                 dbg_write_str(" \n");
 
-/*                 uint16_t rpm = getRpm();
+                uint16_t rpm = getRpm();
                 dbg_write_str("Fan rpm:");
                 dbg_write_u16(&rpm,1);
-                dbg_write_str(" \n"); */
+                dbg_write_str(" \n");
             }
-        #endif  
+        #endif   */
 
         
     }
