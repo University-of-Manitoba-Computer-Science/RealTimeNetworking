@@ -14,6 +14,9 @@
 #define CAN_RX_ID 0x200
 
 void send_can_handler(uint8_t *response, uint8_t argc, char **argv);
+void set_gyro_handler(uint8_t *response, uint8_t argc, char **argv);
+void set_fan_handler(uint8_t *response, uint8_t argc, char **argv);
+void set_blinky_handler(uint8_t *response, uint8_t argc, char **argv);
 
 int main(void)
 {
@@ -46,9 +49,15 @@ int main(void)
     init_wifi_socket();
 
     register_wifi_cmd("help", help_handler);
+
     register_wifi_cmd("set_light", set_light_handler);
     register_wifi_cmd("get_light", get_light_handler);
+
     register_wifi_cmd("send_can", send_can_handler);
+
+    register_wifi_cmd("set_gyro", set_gyro_handler);
+    register_wifi_cmd("set_fan", set_fan_handler);
+    register_wifi_cmd("set_blinky", set_blinky_handler);
 
     // led indicates when server is running and ready to accept connections
     PORT_REGS->GROUP[0].PORT_OUTCLR = PORT_PA14;
@@ -68,6 +77,101 @@ void send_can_handler(uint8_t *response, uint8_t argc, char **argv)
     {
         queue_message(CAN_ID, argv[1], 8);
         strcat(response, "CAN message has been sent!\n");
+        return;
+    }
+    else
+    {
+        strcat(response, "Invalid arguments\n");
+    }
+}
+
+void set_gyro_handler(uint8_t *response, uint8_t argc, char **argv)
+{
+    if (argc == 2)
+    {
+        uint8_t command[2] = {'g'};
+
+        if (strncmp(argv[1], "x", 1) == 0)
+        {
+            command[1] = 'x';
+        }
+        else if (strncmp(argv[1], "y", 1) == 0)
+        {
+            command[1] = 'y';
+        }
+        else if (strncmp(argv[1], "z", 1) == 0)
+        {
+            command[1] = 'z';
+        }
+        else
+        {
+            strcat(response, "Invalid argument (x/y/z)\n");
+            return;
+        }
+
+        queue_message(CAN_ID, command, 2);
+        strcat(response, "Gyro axis command sent!\n");
+        return;
+    }
+    else
+    {
+        strcat(response, "Invalid arguments\n");
+    }
+}
+
+void set_fan_handler(uint8_t *response, uint8_t argc, char **argv)
+{
+    if (argc == 2)
+    {
+        uint8_t command[2] = {'f'};
+        uint8_t speed = atoi(argv[1]);
+
+        if (0 <= speed && speed <= 100)
+        {
+            command[1] = speed * 255 / 100;
+        }
+        else
+        {
+            strcat(response, "Invalid argument (0-100)\n");
+            return;
+        }
+
+        queue_message(CAN_ID, command, 2);
+        strcat(response, "Fan speed command sent!\n");
+        return;
+    }
+    else
+    {
+        strcat(response, "Invalid arguments\n");
+    }
+}
+
+void set_blinky_handler(uint8_t *response, uint8_t argc, char **argv)
+{
+    if (argc == 2)
+    {
+        uint8_t command[2] = {'l'};
+
+        if (strncmp(argv[1], "off", 3) == 0)
+        {
+            command[1] = '0';
+        }
+        else if (strncmp(argv[1], "on", 2) == 0)
+        {
+            command[1] = '1';
+        }
+        else if (strncmp(argv[1], "flashing", 8) == 0)
+        {
+            command[1] = '2';
+        }
+        else
+        {
+            strcat(response, "Invalid argument (on/off/flashing)\n");
+            return;
+        }
+
+        queue_message(CAN_ID, command, 2);
+        strcat(response, "Light mode command sent!\n");
         return;
     }
     else
