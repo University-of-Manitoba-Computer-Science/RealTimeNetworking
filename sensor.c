@@ -91,7 +91,7 @@ void sampleX(){
 }
 
 
-/decodes our message
+//decodes our message
 void decode_msg(uint8_t *msg){
     uint8_t tmp[2];
     if(msg[0] == (uint8_t)('g')){
