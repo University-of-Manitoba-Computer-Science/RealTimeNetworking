@@ -16,7 +16,7 @@
 //  number of millisecond between LED flashes
 #define LED_FLASH_MS  1000UL
 #define GYRO_CHECK_MS 200UL
-#define COMMAND_CHECK_MS 300UL
+#define COMMAND_CHECK_MS 1000UL
 
 
 // NOTE: this overflows every ~50 days, so I'm not going to care here...
