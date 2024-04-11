@@ -190,7 +190,7 @@ static void socket_cb(int8_t sock, uint8_t u8_msg, void *pv_msg)
         {
             dbg_write_str("socket_cb: accept success!\n");
             tcp_client_socket = pstr_accept->sock;
-            wifi8_socket_receive(&wifi8, tcp_client_socket, gau8_socket_test_buffer, sizeof(gau8_socket_test_buffer), 0);
+            wifi8_socket_receive(&wifi8, tcp_client_socket, gau8_socket_test_buffer, sizeof(gau8_socket_test_buffer), 5000);
         }
         else
         {
