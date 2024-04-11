@@ -14,9 +14,10 @@
 #define CAN_RX_ID 0x200
 
 void send_can_handler(uint8_t *response, uint8_t argc, char **argv);
-void set_gyro_handler(uint8_t *response, uint8_t argc, char **argv);
+
+void get_gyro_handler(uint8_t *response, uint8_t argc, char **argv);
 void set_fan_handler(uint8_t *response, uint8_t argc, char **argv);
-void set_blinky_handler(uint8_t *response, uint8_t argc, char **argv);
+void set_led_handler(uint8_t *response, uint8_t argc, char **argv);
 
 int main(void)
 {
@@ -50,14 +51,11 @@ int main(void)
 
     register_wifi_cmd("help", help_handler);
 
-    register_wifi_cmd("set_light", set_light_handler);
-    register_wifi_cmd("get_light", get_light_handler);
-
     register_wifi_cmd("send_can", send_can_handler);
 
-    register_wifi_cmd("set_gyro", set_gyro_handler);
+    register_wifi_cmd("get_gyro", get_gyro_handler);
     register_wifi_cmd("set_fan", set_fan_handler);
-    register_wifi_cmd("set_blinky", set_blinky_handler);
+    register_wifi_cmd("set_led", set_led_handler);
 
     // led indicates when server is running and ready to accept connections
     PORT_REGS->GROUP[0].PORT_OUTCLR = PORT_PA14;
@@ -85,7 +83,7 @@ void send_can_handler(uint8_t *response, uint8_t argc, char **argv)
     }
 }
 
-void set_gyro_handler(uint8_t *response, uint8_t argc, char **argv)
+void get_gyro_handler(uint8_t *response, uint8_t argc, char **argv)
 {
     if (argc == 2)
     {
@@ -109,13 +107,45 @@ void set_gyro_handler(uint8_t *response, uint8_t argc, char **argv)
             return;
         }
 
+        // flush buffer
+        uint8_t temp[2];
+        while (dequeue_message(temp, 2) != -1)
+        {
+        };
+
+        // send command
         queue_message(CAN_ID, command, 2);
-        strcat(response, "Gyro axis command sent!\n");
-        return;
+
+        uint8_t can_msg[2];
+        uint32_t start = get_ticks();
+
+        // wait until msg comes or 10s pass
+        while (dequeue_message(can_msg, 2) == -1 && get_ticks() - start < 10000)
+        {
+        };
+
+        // respond with success or timeout
+        if (get_ticks() - start < 10000)
+        {
+            char can_msg_str[16] = {0};
+            itoa(can_msg[0], can_msg_str, 10);
+
+            strcat(response, "Gyro data received! (");
+            strcat(response, can_msg_str);
+            strcat(response, ")\n");
+
+            return;
+        }
+        else
+        {
+            strcat(response, "Gyro data not received\n");
+            return;
+        }
     }
     else
     {
         strcat(response, "Invalid arguments\n");
+        return;
     }
 }
 
@@ -146,7 +176,7 @@ void set_fan_handler(uint8_t *response, uint8_t argc, char **argv)
     }
 }
 
-void set_blinky_handler(uint8_t *response, uint8_t argc, char **argv)
+void set_led_handler(uint8_t *response, uint8_t argc, char **argv)
 {
     if (argc == 2)
     {

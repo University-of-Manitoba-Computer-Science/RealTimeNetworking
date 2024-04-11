@@ -99,7 +99,7 @@ async function handleCommandSocket(command: string) {
         success: false,
       });
       client.end();
-    }, 10000);
+    }, 15000);
   });
 }
 
