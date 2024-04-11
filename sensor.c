@@ -1,4 +1,4 @@
-#include <sam.h>
+#include "sam.h"
 
 #include "button.h"
 #include "dcc_stdio.h"
@@ -100,42 +100,44 @@ void decode_msg(uint8_t *msg){
             //tx gyro_xyz_buff[0]
             tmp[0] = (uint8_t)((0XFF00&gyro_xyz_buff[0])>>8);
             tmp[1] = (uint8_t)(0X00FF&gyro_xyz_buff[0]);
-            txUARTArr(SERCOM4_REGS, tmp, 2);
+            txUARTArr(SERCOM0_REGS, tmp, 2);
         }
         else if(msg[1] == (uint8_t)('y')){
             //tx gyro_xyz_buff[1]
             tmp[0] = (uint8_t)((0XFF00&gyro_xyz_buff[1])>>8);
             tmp[1] = (uint8_t)(0X00FF&gyro_xyz_buff[1]);
-            txUARTArr(SERCOM4_REGS, tmp, 2);
+            txUARTArr(SERCOM0_REGS, tmp, 2);
         }
         else if(msg[1] == (uint8_t)('z')){
             //tx gyro_xyz_buff[2]
             tmp[0] = (uint8_t)((0XFF00&gyro_xyz_buff[2])>>8);
             tmp[1] = (uint8_t)(0X00FF&gyro_xyz_buff[2]);
-            txUARTArr(SERCOM4_REGS, tmp, 2);
+            txUARTArr(SERCOM0_REGS, tmp, 2);
         }
 
     }
     else if(msg[0] == (uint8_t)('x')){
         //Accelerometer command block
+        txMode(SERCOM0_REGS);
         if(msg[1] == (uint8_t)('x')){
             //tx xl_xyz_buff[0]
             tmp[0] = (uint8_t)((0XFF00&xl_xyz_buff[0])>>8);
             tmp[1] = (uint8_t)(0X00FF&xl_xyz_buff[0]);
-            txUARTArr(SERCOM4_REGS, tmp, 2);
+            txUARTArr(SERCOM0_REGS, tmp, 2);
         }
         else if(msg[1] == (uint8_t)('y')){
             //tx xl_xyz_buff[1]
             tmp[0] = (uint8_t)((0XFF00&xl_xyz_buff[1])>>8);
             tmp[1] = (uint8_t)(0X00FF&xl_xyz_buff[1]);
-            txUARTArr(SERCOM4_REGS, tmp, 2);
+            txUARTArr(SERCOM0_REGS, tmp, 2);
         }
         else if(msg[1] == (uint8_t)('z')){
             //tx xl_xyz_buff[2]
             tmp[0] = (uint8_t)((0XFF00&xl_xyz_buff[2])>>8);
             tmp[1] = (uint8_t)(0X00FF&xl_xyz_buff[2]);
-            txUARTArr(SERCOM4_REGS, tmp, 2);
+            txUARTArr(SERCOM0_REGS, tmp, 2);
         }
+        rxMode(SERCOM0_REGS);
     }
     else if(msg[0] == (uint8_t)('f')){
         //Fan command block
@@ -178,12 +180,19 @@ void commandHandler(){
                             rx_data[1]    = extra;
                             extra_is_used = 0;
                             decode_msg(rx_data);
+                            #ifndef NDEBUG
+                                dbg_write_u8(rx_data,2);
+                            #endif
+
                         }
                     } else {
                         uart_len = rxUART(SERCOM0_REGS, rx_data, 2);
 
                         if (uart_len == 2) {
                             decode_msg(rx_data);
+                            #ifndef NDEBUG
+                                dbg_write_u8(rx_data,2);
+                            #endif
                         } else {
                             // handle byte with a missing second byte
                             extra         = rx_data[0];
@@ -191,6 +200,7 @@ void commandHandler(){
                         }
                     }
                 }
+ 
             
 }
 
@@ -202,7 +212,7 @@ void initAllPorts()
 
     port15Init();  // init button ports
     sercom2Init(); // init sercom2 -> i2c ports
-    portUART(SERCOM4_REGS);    // init UART ports
+    portUART(SERCOM0_REGS);    // init UART ports
 
 } // initAllPorts
 
@@ -210,18 +220,18 @@ void initAllClks()
 {
     clkButton();
     clkI2C();
-    clkUART(SERCOM4_REGS);
+    clkUART(SERCOM0_REGS);
 
 } // initAllClks
 
 void initAll()
 {
     heartInit();
-    initAllClks();
     initAllPorts();
+    initAllClks();
     initI2C();
     initButton();
-    initUART(SERCOM4_REGS);
+    initUART(SERCOM0_REGS);
     fanInit();
     rpmInit();
 
@@ -278,7 +288,7 @@ int main(void)
     accelOnMode();
     gyroOnMode();
     // sleep until we have an interrupt
-
+    rxMode(SERCOM0_REGS);
 
 
     while (1) {
