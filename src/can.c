@@ -94,8 +94,8 @@ void canInit(uint16_t *ids_to_keep, int num_ids_to_keep)
     PORT_REGS->GROUP[1].PORT_PMUX[6]    |= PORT_PMUX_PMUXO_H;
 
     // setup mode port
-    PORT_REGS->GROUP[0].PORT_DIRSET = PORT_PB04;
-    PORT_REGS->GROUP[0].PORT_OUTSET = PORT_PB04;
+    PORT_REGS->GROUP[1].PORT_DIRSET = PORT_PB04;
+    PORT_REGS->GROUP[1].PORT_OUTSET = PORT_PB04;
 
     // set generator 3 to use DFLL48M as a source; with a divider of 3 that
     // gives us 16 MHz
@@ -165,7 +165,7 @@ void canInit(uint16_t *ids_to_keep, int num_ids_to_keep)
     while ((CAN1_REGS->CAN_CCCR & CAN_CCCR_INIT_Msk) != CAN_CCCR_INIT_Msk);
     CAN1_REGS->CAN_CCCR &= ~CAN_CCCR_INIT_Msk;
 
-    PORT_REGS->GROUP[0].PORT_OUTCLR = PORT_PB04;
+    PORT_REGS->GROUP[1].PORT_OUTCLR = PORT_PB04;
 
     // set up message filters
     int offset = STD_FILT_OFFSET;

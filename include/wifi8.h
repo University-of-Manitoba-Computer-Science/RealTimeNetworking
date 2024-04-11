@@ -38,6 +38,10 @@ extern "C"
 #include "sam.h"
 #include "heart.h"
 
+#define NANO_SPOT_1
+
+#ifdef NANO_SPOT_1
+
 #define WIFI0_EN PIN_PA02
 #define WIFI0_RST PIN_PA07
 #define WIFI0_CS PIN_PA18
@@ -53,6 +57,48 @@ extern "C"
 #define WIFI0_MISO_Msk PORT_PA19
 #define WIFI0_MOSI_Msk PORT_PA16
 #define WIFI0_INT_Msk PORT_PA04
+
+#endif
+
+#ifdef NANO_SPOT_2
+
+#define WIFI0_EN PIN_PB03
+#define WIFI0_RST PIN_PA06
+#define WIFI0_CS PIN_PB05
+#define WIFI0_SCK PIN_PA17
+#define WIFI0_MISO PIN_PA19
+#define WIFI0_MOSI PIN_PA16
+#define WIFI0_INT PIN_PB14
+
+#define WIFI0_EN_Msk PORT_PB03
+#define WIFI0_RST_Msk PORT_PA06
+#define WIFI0_CS_Msk PORT_PB05
+#define WIFI0_SCK_Msk PORT_PA17
+#define WIFI0_MISO_Msk PORT_PA19
+#define WIFI0_MOSI_Msk PORT_PA16
+#define WIFI0_INT_Msk PORT_PB14
+
+#endif
+
+#ifdef NANO_SPOT_3
+
+#define WIFI0_EN PIN_PB08
+#define WIFI0_RST PIN_PA06
+#define WIFI0_CS PIN_PB04
+#define WIFI0_SCK PIN_PA17
+#define WIFI0_MISO PIN_PA19
+#define WIFI0_MOSI PIN_PA16
+#define WIFI0_INT PIN_PB07
+
+#define WIFI0_EN_Msk PORT_PB08
+#define WIFI0_RST_Msk PORT_PA06
+#define WIFI0_CS_Msk PORT_PB04
+#define WIFI0_SCK_Msk PORT_PA17
+#define WIFI0_MISO_Msk PORT_PA19
+#define WIFI0_MOSI_Msk PORT_PA16
+#define WIFI0_INT_Msk PORT_PB07
+
+#endif
 
 #define pin_name_t uint8_t
 #define digital_in_t uint8_t

@@ -6,15 +6,6 @@ uint8_t light_status = 0;
 
 void set_light_handler(uint8_t *response, uint8_t argc, char **argv)
 {
-    dbg_write_str("set_light_handler\n");
-    dbg_write_str("argc: ");
-    dbg_write_char(argc + 'a');
-    dbg_write_str("\n");
-
-    dbg_write_str("argv[1]: ");
-    dbg_write_str(argv[1]);
-    dbg_write_str("\n");
-
     if (argc == 2)
     {
         if (strncmp(argv[1], "on", 2) == 0)
