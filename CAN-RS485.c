@@ -5,19 +5,8 @@
 #include "heart.h"
 #include "uart.h"
 
-#define MAX_RX_DATA_LEN 16
-
 #define CAN_ID    0x200
 #define CAN_RX_ID 0x201
-
-// NOTE: this overflows every ~50 days, so I'm not going to care here...
-// volatile uint32_t msCount = 0;
-
-// Fires every 1ms
-// void SysTick_Handler()
-// {
-//     msCount++;
-// }
 
 int main(void)
 {
@@ -53,33 +42,52 @@ int main(void)
     // we want interrupts!
     __enable_irq();
 
+    uint8_t extra         = 0;
+    int     extra_is_used = 0;
+
     // sleep until we have an interrupt
     while (1) {
         __WFI();
 
         // forward messages once every second
         if ((get_ticks() % 1000) == 0) {
-            // check for waiting CAN data and send it over RS485
             int can_len = 0;
             while (can_len != -1) {
-                uint8_t rx_data[MAX_RX_DATA_LEN];
-                can_len = dequeue_message(rx_data, MAX_RX_DATA_LEN);
+                // receive CAN message
+                uint8_t rx_data[2];
+                can_len = dequeue_message(rx_data, 2);
 
+                // send the message as a pair of UART messages if successful
                 if (can_len > 0) {
                     txMode(SERCOM0_REGS);
-                    txUARTArr(SERCOM0_REGS, rx_data, can_len);
+                    txUARTArr(SERCOM0_REGS, rx_data, 2);
                     rxMode(SERCOM0_REGS);
                 }
             }
 
-            // check for waiting RS-485 data and send it over CAN
             int uart_len = 1;
             while (uart_len != 0) {
-                uint8_t rx_data[MAX_RX_DATA_LEN];
-                uart_len = rxUART(SERCOM0_REGS, rx_data, MAX_RX_DATA_LEN);
+                uint8_t rx_data[2];
 
-                if (uart_len > 0) {
-                    queue_message(CAN_ID, rx_data, uart_len);
+                if (extra_is_used) {
+                    // handle second byte of pair if first was unused
+                    rx_data[0] = extra;
+                    uart_len   = rxUART(SERCOM0_REGS, &extra, 1);
+                    if (uart_len > 0) {
+                        rx_data[1]    = extra;
+                        extra_is_used = 0;
+                        queue_message(CAN_ID, rx_data, 2);
+                    }
+                } else {
+                    uart_len = rxUART(SERCOM0_REGS, rx_data, 2);
+
+                    if (uart_len == 2) {
+                        queue_message(CAN_ID, rx_data, 2);
+                    } else {
+                        // handle byte with a missing second byte
+                        extra         = rx_data[0];
+                        extra_is_used = 1;
+                    }
                 }
             }
         }
