@@ -35,31 +35,31 @@ void (*led)() = &flash;
 
 void flash(){
 
-    if ((get_ticks() % LED_FLASH_MS) == 0) {
+    
 
         PORT_REGS->GROUP[0].PORT_OUTTGL = PORT_PA14;
         updateOutput(0x11);
-    }
+    
 
 }
 
 void off(){
 
-    if ((get_ticks() % LED_FLASH_MS) == 0) {
+    
 
         PORT_REGS->GROUP[0].PORT_OUTSET = PORT_PA14;
         updateOutput(0x00);
-    }
+    
 
 }
 
 void on(){
 
-    if ((get_ticks() % LED_FLASH_MS) == 0) {
+    
 
         PORT_REGS->GROUP[0].PORT_OUTCLR = PORT_PA14;
         updateOutput(0x7F);
-    }
+    
 
 }
 
@@ -167,7 +167,6 @@ static int     extra_is_used = 0;
 //get our uart message and decode them to figure out what to do
 void commandHandler(){
             int uart_len = 1;
-            if ((get_ticks() % LED_FLASH_MS) == 0) {
                 while (uart_len != 0) {
                     uint8_t rx_data[2];
 
@@ -192,7 +191,7 @@ void commandHandler(){
                         }
                     }
                 }
-            }
+            
 }
 
 void initAllPorts()
@@ -284,9 +283,11 @@ int main(void)
 
     while (1) {
         __WFI();
-        led();
+        if ((get_ticks() % LED_FLASH_MS) == 0) {
+            led();
+            commandHandler();
+        }
         sample();
-        commandHandler();
 
 
 
