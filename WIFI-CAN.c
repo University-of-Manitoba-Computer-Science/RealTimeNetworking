@@ -19,6 +19,15 @@ void get_gyro_handler(uint8_t *response, uint8_t argc, char **argv);
 void set_fan_handler(uint8_t *response, uint8_t argc, char **argv);
 void set_led_handler(uint8_t *response, uint8_t argc, char **argv);
 
+typedef enum
+{
+    LED_ON,
+    LED_OFF,
+    LED_FLASHING
+} led_mode_t;
+
+static led_mode_t cur_mode = LED_ON;
+
 int main(void)
 {
     // setup led output on PA14
@@ -60,11 +69,30 @@ int main(void)
     // led indicates when server is running and ready to accept connections
     PORT_REGS->GROUP[0].PORT_OUTCLR = PORT_PA14;
 
+    uint32_t last_heart = get_ticks();
+
     while (1)
     {
         __WFI();
 
         tick_wifi_app();
+
+        if (cur_mode == LED_FLASHING)
+        {
+            if (get_ticks() - last_heart > 1000)
+            {
+                last_heart = get_ticks();
+                PORT_REGS->GROUP[0].PORT_OUTTGL = PORT_PA14;
+            }
+        }
+        else if (cur_mode == LED_ON)
+        {
+            PORT_REGS->GROUP[0].PORT_OUTCLR = PORT_PA14;
+        }
+        else
+        {
+            PORT_REGS->GROUP[0].PORT_OUTSET = PORT_PA14;
+        }
     }
     return 0;
 }
@@ -185,14 +213,17 @@ void set_led_handler(uint8_t *response, uint8_t argc, char **argv)
         if (strncmp(argv[1], "off", 3) == 0)
         {
             command[1] = '0';
+            cur_mode = LED_OFF;
         }
         else if (strncmp(argv[1], "on", 2) == 0)
         {
             command[1] = '1';
+            cur_mode = LED_ON;
         }
         else if (strncmp(argv[1], "flashing", 8) == 0)
         {
             command[1] = '2';
+            cur_mode = LED_FLASHING;
         }
         else
         {
